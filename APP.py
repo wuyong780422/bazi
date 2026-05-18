@@ -154,7 +154,7 @@ with st.container(border=True):
     col_gender, col_cal = st.columns(2)
     with col_gender:
         st.markdown("**性别**")
-        gender = st.radio("", ["男", "女"], horizontal=True, label_visibility="collapsed")
+        gender = st.radio("", ["先生", "女士"], horizontal=True, label_visibility="collapsed")
     with col_cal:
         st.markdown("**历法**")
         calendar_type = st.radio("", ["公历", "农历"], horizontal=True, label_visibility="collapsed")
