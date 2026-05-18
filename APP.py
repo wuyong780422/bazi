@@ -161,7 +161,7 @@ with st.container(border=True):
 
     if calendar_type == "公历":
         st.markdown("**出生时间（必填）**")
-        birth_date = st.date_input("", datetime(1976, 5, 20), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31), label_visibility="collapsed")
+        birth_date = st.date_input("", datetime(2000, 1, 1), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31), label_visibility="collapsed")
         date_str = birth_date.strftime("%Y-%m-%d")
     else:
         col_lun_year, col_lun_month, col_lun_day = st.columns(3)
@@ -170,10 +170,10 @@ with st.container(border=True):
             lunar_year_input = st.number_input("", 1900, 2100, 2000, label_visibility="collapsed")
         with col_lun_month:
             st.markdown("**农历月**")
-            lunar_month_input = st.number_input("", 1, 12, 1, label_visibility="collapsed")
+            lunar_month_input = st.number_input("", 1, 12, 6, label_visibility="collapsed")
         with col_lun_day:
             st.markdown("**农历日**")
-            lunar_day_input = st.number_input("", 1, 30, 1, label_visibility="collapsed")
+            lunar_day_input = st.number_input("", 1, 30, 15, label_visibility="collapsed")
         st.markdown("**平月/闰月**")
         leap_option = st.radio("", ["平月", "闰月"], horizontal=True, label_visibility="collapsed")
         is_leap_input = 1 if leap_option == "闰月" else 0
