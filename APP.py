@@ -1,7 +1,6 @@
 # ==========================================================
-# 真命盘专业版 —— 固定顶部标题+全功能原版+Streamlit云端兼容版
-# 本地运行：streamlit run app.py
-# 云端部署：GitHub+Streamlit Cloud 直接用
+# 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
+# 本地/云端通用，不修改数据库逻辑，不破坏现有功能
 # ==========================================================
 import streamlit as st
 import sqlite3
@@ -118,7 +117,7 @@ class BaziCalculator:
         current_shichen = shichen_map.get(current_hour, "亥时")
         return BaziCalculator.generate_bazi(current_date, current_shichen)
 
-# ===================== 页面样式（完全保留你的原版） =====================
+# ===================== 页面样式（完全保留你的原版，仅优化手机端历法布局） =====================
 st.set_page_config(page_title="真命盘专业版", page_icon="☯️", layout="centered")
 page_bg = """
 <style>
@@ -133,8 +132,8 @@ div.stTextInput>div>div {border-radius:8px; background:#FFF;}
 div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
 div.stDateInput>div>div {border-radius:8px; background:#FFF;}
 div.stNumberInput>div>div {border-radius:8px; background:#FFF;}
-div.stRadio>div {display:flex;gap:12px;justify-content:center;}
-div.stRadio label {background:#FFF;border-radius:20px;padding:8px 20px;border:1px solid #EEE;font-size:14px;}
+div.stRadio>div {display:flex;gap:12px;justify-content:center;flex-wrap:nowrap !important;}
+div.stRadio label {background:#FFF;border-radius:20px;padding:8px 20px;border:1px solid #EEE;font-size:14px;white-space:nowrap;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
@@ -145,12 +144,13 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 st.markdown(page_bg, unsafe_allow_html=True)
 st.markdown("""<div class="fixed-header"><div class="fixed-icon">☯️</div><div class="fixed-text">真命盘专业版</div></div>""", unsafe_allow_html=True)
 
-# ===================== 界面与功能（完全不变） =====================
+# ===================== 界面与功能（仅优化性别/历法布局，和性别一样一行显示） =====================
 with st.container(border=True):
     col_name_label, col_name_input = st.columns([1, 4])
     with col_name_label: st.markdown("**姓名**")
     with col_name_input: name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed")
 
+    # 优化点：性别和历法放在同一行两列，和性别一样一行显示
     col_gender, col_cal = st.columns(2)
     with col_gender:
         st.markdown("**性别**")
@@ -161,7 +161,7 @@ with st.container(border=True):
 
     if calendar_type == "公历":
         st.markdown("**出生时间（必填）**")
-        birth_date = st.date_input("", datetime(1980, 1, 1), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31), label_visibility="collapsed")
+        birth_date = st.date_input("", datetime(1976, 5, 20), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31), label_visibility="collapsed")
         date_str = birth_date.strftime("%Y-%m-%d")
     else:
         col_lun_year, col_lun_month, col_lun_day = st.columns(3)
@@ -170,10 +170,10 @@ with st.container(border=True):
             lunar_year_input = st.number_input("", 1900, 2100, 2000, label_visibility="collapsed")
         with col_lun_month:
             st.markdown("**农历月**")
-            lunar_month_input = st.number_input("", 1, 12, 5, label_visibility="collapsed")
+            lunar_month_input = st.number_input("", 1, 12, 1, label_visibility="collapsed")
         with col_lun_day:
             st.markdown("**农历日**")
-            lunar_day_input = st.number_input("", 1, 30, 15, label_visibility="collapsed")
+            lunar_day_input = st.number_input("", 1, 30, 1, label_visibility="collapsed")
         st.markdown("**是否闰月**")
         leap_option = st.radio("", ["否（平月）", "是（闰月）"], horizontal=True, label_visibility="collapsed")
         is_leap_input = 1 if leap_option == "是（闰月）" else 0
