@@ -123,10 +123,7 @@ page_bg = """
 <style>
 body {margin: 0;padding: 0;background-color:#E5E5E5;}
 .stApp {background-color:#E5E5E5;padding: 0;}
-.fixed-header {position: fixed !important;top: 50px !important;left: 0 !important;right: 0 !important;height: 60px;display: flex;align-items: center;justify-content: center;padding: 0 20px;background: #FFFFFF;border-bottom: 1px solid #E0E0E0;z-index: 99999 !important;}
-.fixed-icon {position: absolute;left: 20px;top: 50%;transform: translateY(-50%);width: 36px;height: 36px;background: #9370DB;border-radius: 8px;display: flex;align-items: center;justify-content: center;color: #FFF;font-size: 20px;}
-.fixed-text {width: 100%;text-align: center;font-size: 22px;font-weight: bold;margin: 0;line-height: 1;}
-div.block-container {padding-top: 80px !important;padding-left:20px !important;padding-right:20px !important;padding-bottom:60px !important;}
+div.block-container {padding-top: 40px !important;padding-left:20px !important;padding-right:20px !important;padding-bottom:60px !important;}
 div.stContainer {background:#F0F0F0;border-radius:12px;padding:15px;}
 div.stTextInput>div>div {border-radius:8px; background:#FFF;}
 div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
@@ -142,8 +139,6 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
-st.markdown("""<div class="fixed-header"><div class="fixed-icon">☯️</div><div class="fixed-text">真命盘专业版</div></div>""", unsafe_allow_html=True)
-
 # ===================== 界面与功能（仅优化性别/历法布局，和性别一样一行显示） =====================
 with st.container(border=True):
     col_name_label, col_name_input = st.columns([1, 4])
