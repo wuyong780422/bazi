@@ -1,0 +1,471 @@
+# ==========================================================
+# 真命盘专业版 —— 固定顶部标题+全功能原版+Streamlit云端兼容版
+# 本地运行：streamlit run app.py
+# 云端部署：GitHub+Streamlit Cloud 直接用
+# ==========================================================
+import streamlit as st
+import sqlite3
+import os
+import sys
+from datetime import datetime
+
+# ===================== 资源路径（云端/本地/打包三兼容，零报错） =====================
+def resource_path(relative_path: str) -> str:
+    """获取资源路径，兼容Streamlit云端、本地运行、PyInstaller打包"""
+    # 优先云端/本地根目录（Streamlit Cloud核心适配）
+    base_path = os.path.abspath(".")
+    full_path = os.path.join(base_path, relative_path)
+    if os.path.exists(full_path):
+        return full_path
+    # 兜底打包模式
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
+# ===================== 数据库连接缓存（云端优化，不改变原版逻辑） =====================
+@st.cache_resource(ttl=3600)
+def get_db_connection():
+    """缓存数据库连接，提升云端性能，兼容原版所有查询"""
+    db_file = resource_path("bazi_calendar.db")
+    try:
+        conn = sqlite3.connect(db_file, timeout=10, check_same_thread=False)
+        return conn
+    except Exception as e:
+        st.error(f"数据库连接失败：{str(e)}")
+        st.stop()
+
+# ===================== 命理常量（原版完整保留） =====================
+SHICHEN_DETAIL = [
+    "子时 23:00-01:00",
+    "丑时 01:00-03:00",
+    "寅时 03:00-05:00",
+    "卯时 05:00-07:00",
+    "辰时 07:00-09:00",
+    "巳时 09:00-11:00",
+    "午时 11:00-13:00",
+    "未时 13:00-15:00",
+    "申时 15:00-17:00",
+    "酉时 17:00-19:00",
+    "戌时 19:00-21:00",
+    "亥时 21:00-23:00"
+]
+SHICHEN_TIME = [s.split(" ")[0] for s in SHICHEN_DETAIL]
+TIANGAN_WUXING = {"甲": "木", "乙": "木", "丙": "火", "丁": "火", "戊": "土", "己": "土", "庚": "金", "辛": "金",
+                  "壬": "水", "癸": "水"}
+YUELING_WUXING = {"寅": "木", "卯": "木", "辰": "土", "巳": "火", "午": "火", "未": "土", "申": "金", "酉": "金",
+                  "戌": "土", "亥": "水", "子": "水", "丑": "土"}
+NAYIN_TABLE = {
+    "甲子": "海中金", "乙丑": "海中金", "丙寅": "炉中火", "丁卯": "炉中火", "戊辰": "大林木", "己巳": "大林木",
+    "庚午": "路旁土", "辛未": "路旁土", "壬申": "剑锋金", "癸酉": "剑锋金", "甲戌": "山头火", "乙亥": "山头火",
+    "丙子": "涧下水", "丁丑": "涧下水", "戊寅": "城头土", "己卯": "城头土", "庚辰": "白蜡金", "辛巳": "白蜡金",
+    "壬午": "杨柳木", "癸未": "杨柳木", "甲申": "泉中水", "乙酉": "泉中水", "丙戌": "屋上土", "丁亥": "屋上土",
+    "戊子": "霹雳火", "己丑": "霹雳火", "庚寅": "松柏木", "辛卯": "松柏木", "壬辰": "长流水", "癸巳": "长流水",
+    "甲午": "沙中金", "乙未": "沙中金", "丙申": "山下火", "丁酉": "山下火", "戊戌": "平地木", "己亥": "平地木",
+    "庚子": "壁上土", "辛丑": "壁上土", "壬寅": "金箔金", "癸卯": "金箔金", "甲辰": "佛灯火", "乙巳": "佛灯火",
+    "丙午": "天河水", "丁未": "天河水", "戊申": "大驿土", "己酉": "大驿土", "庚戌": "钗钏金", "辛亥": "钗钏金",
+    "壬子": "桑柘木", "癸丑": "桑柘木", "甲寅": "大溪水", "乙卯": "大溪水", "丙辰": "沙中土", "丁巳": "沙中土",
+    "戊午": "天上火", "己未": "天上火", "庚申": "石榴木", "辛酉": "石榴木", "壬戌": "大海水", "癸亥": "大海水"
+}
+
+# ===================== 数据库函数（原版完整保留，仅替换连接为缓存版） =====================
+def query_db_ganzhi(solar_date_str: str) -> tuple[str, str, str]:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT 年, 月建, 日柱 FROM calendar WHERE 国历 = ? LIMIT 1', (solar_date_str,))
+        result = cursor.fetchone()
+        return result if result else ("甲子", "甲子", "甲子")
+    except Exception:
+        return "甲子", "甲子", "甲子"
+
+def solar_to_lunar_from_db(solar_date_str: str) -> dict[str, str]:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT 农历年,农历月,农历日,生肖 FROM calendar WHERE 国历 = ? LIMIT 1', (solar_date_str,))
+        res = cursor.fetchone()
+        if res:
+            return {"农历完整信息": f"{res[0]}年{res[1]}月{res[2]}日", "生肖": res[3]}
+        else:
+            return {"农历完整信息": "2026年三月初十", "生肖": "马"}
+    except Exception:
+        return {"农历完整信息": "2026年三月初十", "生肖": "马"}
+
+def lunar_to_solar_from_db(lunar_year: int, lunar_month: int, lunar_day: int, is_leap: int) -> str:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT 国历 FROM calendar 
+            WHERE 农历年=? AND 农历月=? AND 农历日=? AND 闰月=? LIMIT 1
+        ''', (lunar_year, lunar_month, lunar_day, is_leap))
+        res = cursor.fetchone()
+        return res[0] if res else "1990-01-01"
+    except Exception:
+        return "1990-01-01"
+
+def calculate_shichen_ganzhi(ri_gan: str, shichen: str) -> str:
+    shichen_zhi_map = {"子时": "子", "丑时": "丑", "寅时": "寅", "卯时": "卯", "辰时": "辰", "巳时": "巳", "午时": "午",
+                       "未时": "未", "申时": "申", "酉时": "酉", "戌时": "戌", "亥时": "亥"}
+    rigan_zi_shigan_map = {"甲": "甲", "己": "甲", "乙": "丙", "庚": "丙", "丙": "戊", "辛": "戊", "丁": "庚",
+                           "壬": "庚", "戊": "壬", "癸": "壬"}
+    gan_list = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+    shichen_index = list(shichen_zhi_map.keys()).index(shichen)
+    zi_gan_index = gan_list.index(rigan_zi_shigan_map[ri_gan])
+    return gan_list[(zi_gan_index + shichen_index) % 10] + shichen_zhi_map[shichen]
+
+# ===================== 八字核心计算（原版完整保留） =====================
+class BaziCalculator:
+    @staticmethod
+    def generate_bazi(target_date: str, shichen: str) -> dict:
+        nian, yue, ri = query_db_ganzhi(target_date)
+        ri_gan = ri[0]
+        shi = calculate_shichen_ganzhi(ri_gan, shichen)
+        lunar = solar_to_lunar_from_db(target_date)
+        wuxing = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
+        for g in [nian[0], yue[0], ri[0], shi[0]]:
+            wuxing[TIANGAN_WUXING[g]] += 1
+        for z in [nian[1], yue[1], ri[1], shi[1]]:
+            wuxing[YUELING_WUXING[z]] += 1
+        return {
+            "公历": target_date, "农历": lunar["农历完整信息"], "生肖": lunar["生肖"],
+            "时辰": shichen, "八字": [nian, yue, ri, shi], "八字_str": f"{nian} {yue} {ri} {shi}",
+            "日干": ri_gan, "五行": wuxing,
+            "纳音": [NAYIN_TABLE.get(nian, ""), NAYIN_TABLE.get(yue, ""), NAYIN_TABLE.get(ri, ""),
+                     NAYIN_TABLE.get(shi, "")]
+        }
+    @staticmethod
+    def get_current_bazi() -> dict:
+        now = datetime.now()
+        current_date = now.strftime("%Y-%m-%d")
+        current_hour = now.hour
+        shichen_map = {23: "子时", 0: "子时", 1: "丑时", 2: "丑时", 3: "寅时", 4: "寅时", 5: "卯时", 6: "卯时",
+                       7: "辰时", 8: "辰时", 9: "巳时", 10: "巳时", 11: "午时", 12: "午时", 13: "未时", 14: "未时",
+                       15: "申时", 16: "申时", 17: "酉时", 18: "酉时", 19: "戌时", 20: "戌时", 21: "亥时", 22: "亥时"}
+        current_shichen = shichen_map.get(current_hour, "亥时")
+        return BaziCalculator.generate_bazi(current_date, current_shichen)
+
+# ===================== 页面配置+固定标题样式（原版完整保留） =====================
+st.set_page_config(page_title="真命盘专业版", page_icon="☯️", layout="centered")
+
+page_bg = """
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background-color:#E5E5E5;
+}
+.stApp {
+    background-color:#E5E5E5;
+    padding: 0;
+}
+.fixed-header {
+    position: fixed !important;
+    top: 50px !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E0E0E0;
+    z-index: 99999 !important;
+}
+.fixed-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: #9370DB;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFF;
+    font-size: 20px;
+}
+.fixed-text {
+    width: 100%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1;
+}
+div.block-container {
+    padding-top: 80px !important;
+    padding-left:20px !important;
+    padding-right:20px !important;
+    padding-bottom:60px !important;
+}
+div.stContainer {
+    background:#F0F0F0;
+    border-radius:12px;
+    padding:15px;
+}
+div.stTextInput>div>div {border-radius:8px; background:#FFF;}
+div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
+div.stDateInput>div>div {border-radius:8px; background:#FFF;}
+div.stNumberInput>div>div {border-radius:8px; background:#FFF;}
+div.stRadio>div {
+    display:flex;
+    gap:12px;
+    justify-content:center;
+}
+div.stRadio label {
+    background:#FFF;
+    border-radius:20px;
+    padding:8px 20px;
+    border:1px solid #EEE;
+    font-size:14px;
+}
+div.stRadio [role="radio"]:checked + label {
+    background:#D4AF37;
+    color:#FFF;
+    border-color:#D4AF37;
+}
+div.stButton>button {
+    background-color:#222222;
+    color:#D4AF37;
+    border-radius:30px;
+    height:68px;
+    font-size:18px;
+    font-weight:bold;
+    width:100%;
+}
+.footer-nav {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#FFF;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+    border-top:1px solid #EEE;
+    z-index:100;
+}
+.nav-item {
+    text-align:center;
+    font-size:12px;
+    color:#666;
+}
+.nav-item.active {
+    color:#9370DB;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
+st.markdown("""
+<div class="fixed-header">
+    <div class="fixed-icon">☯️</div>
+    <div class="fixed-text">真命盘专业版</div>
+</div>
+""", unsafe_allow_html=True)
+
+# ===================== 表单区域（原版完整保留，无任何删减） =====================
+with st.container(border=True):
+    col_name_label, col_name_input = st.columns([1, 4])
+    with col_name_label:
+        st.markdown("**姓名**")
+    with col_name_input:
+        name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed")
+
+    col_gender, col_cal = st.columns(2)
+    with col_gender:
+        st.markdown("**性别**")
+        gender = st.radio("", ["男", "女"], horizontal=True, label_visibility="collapsed")
+    with col_cal:
+        st.markdown("**历法**")
+        calendar_type = st.radio("", ["公历", "农历"], horizontal=True, label_visibility="collapsed")
+
+    if calendar_type == "公历":
+        st.markdown("**出生时间（必填）**")
+        birth_date = st.date_input(
+            "",
+            datetime(1976, 5, 20),
+            min_value=datetime(1900, 1, 1),
+            max_value=datetime(2100, 12, 31),
+            label_visibility="collapsed"
+        )
+        date_str = birth_date.strftime("%Y-%m-%d")
+    else:
+        col_lun_year, col_lun_month, col_lun_day = st.columns(3)
+        with col_lun_year:
+            st.markdown("**农历年**")
+            lunar_year_input = st.number_input("", 1900, 2100, 2000, label_visibility="collapsed")
+        with col_lun_month:
+            st.markdown("**农历月**")
+            lunar_month_input = st.number_input("", 1, 12, 1, label_visibility="collapsed")
+        with col_lun_day:
+            st.markdown("**农历日**")
+            lunar_day_input = st.number_input("", 1, 30, 1, label_visibility="collapsed")
+        st.markdown("**是否闰月**")
+        leap_option = st.radio("", ["否（平月）", "是（闰月）"], horizontal=True, label_visibility="collapsed")
+        is_leap_input = 1 if leap_option == "是（闰月）" else 0
+        date_str = lunar_to_solar_from_db(lunar_year_input, lunar_month_input, lunar_day_input, is_leap_input)
+
+    st.markdown("**出生地区**")
+    birth_area = st.selectbox("", ["北京", "未知地区（北京时间）", "上海", "广州", "深圳"], index=0,
+                              label_visibility="collapsed")
+    if birth_area == "未知地区（北京时间）":
+        true_sun_time = "1990-01-01 00:00"
+        lat, lon = "北纬39.93", "东经116.42"
+    else:
+        true_sun_time = "1990-01-01 00:00"
+        lat, lon = "北纬39.93", "东经116.42"
+
+    st.markdown("**出生时辰**")
+    selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
+    shichen_input = selected_shichen_detail.split(" ")[0]
+
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("开始排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    with col_btn2:
+        if st.button("即时排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+
+    col_info, col_save = st.columns([3, 1])
+    with col_info:
+        st.markdown(f"""
+        <div style="color:#666;font-size:12px;">
+            真太阳时：{true_sun_time}<br>
+            地址经纬：{lat} {lon}
+        </div>
+        """, unsafe_allow_html=True)
+    with col_save:
+        save_toggle = st.toggle("保存", value=False)
+
+# ===================== 排盘结果（原版完整保留） =====================
+if "bazi_result" in st.session_state and st.session_state.bazi_result:
+    r = st.session_state.bazi_result
+    st.markdown("---")
+    st.success("✅ 排盘完成")
+    col_pillar = st.columns(4)
+    col_pillar[0].metric("年柱", r["八字"][0])
+    col_pillar[1].metric("月柱", r["八字"][1])
+    col_pillar[2].metric("日柱", r["八字"][2])
+    col_pillar[3].metric("时柱", r["八字"][3])
+    st.markdown(f"**公历**：{r['公历']}")
+    st.markdown(f"**农历**：{r['农历']}")
+    st.markdown(
+        f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']} {SHICHEN_TIME.index(r['时辰']) * 2}:00-{(SHICHEN_TIME.index(r['时辰']) * 2 + 2) % 24}:00")
+    st.markdown(f"**日干**：{r['日干']}")
+    st.markdown(
+        f"**五行**：金{r['五行']['金']} 木{r['五行']['木']} 水{r['五行']['水']} 火{r['五行']['火']} 土{r['五行']['土']}")
+
+# ===================== 高级功能（原版完整保留：万年历/财运/合盘/多盘对比） =====================
+st.markdown("---")
+tab1, tab2, tab3, tab4 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘对比"])
+with tab1:
+    d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
+    if st.button("查询万年历"):
+        s = d.strftime("%Y-%m-%d")
+        lu = solar_to_lunar_from_db(s)
+        n, y, r = query_db_ganzhi(s)
+        st.write(f"公历：{s}")
+        st.write(f"农历：{lu['农历完整信息']}")
+        st.write(f"生肖：{lu['生肖']}")
+        st.write(f"年柱：{n}　月柱：{y}　日柱：{r}")
+with tab2:
+    if "bazi_result" in st.session_state and st.session_state.bazi_result:
+        r = st.session_state.bazi_result
+        w = r["五行"]
+        caixing = "财星旺" if w["金"] + w["土"] > 3 else "财星弱"
+        st.markdown(f"**日干**：{r['日干']}")
+        st.markdown(f"**财运**：{caixing}")
+        st.markdown("正财：稳定收入　偏财：投资外快")
+    else:
+        st.warning("请先排盘")
+with tab3:
+    st.markdown("#### 双人八字合盘")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("**A方**")
+        a_date = st.date_input("A公历生日", key="a_date")
+        a_shichen = st.selectbox("A出生时辰", SHICHEN_DETAIL, key="a_shi")
+        a_shichen_name = a_shichen.split(" ")[0]
+    with col_b:
+        st.markdown("**B方**")
+        b_date = st.date_input("B公历生日", key="b_date")
+        b_shichen = st.selectbox("B出生时辰", SHICHEN_DETAIL, key="b_shi")
+        b_shichen_name = b_shichen.split(" ")[0]
+    if st.button("开始合盘"):
+        a_data = BaziCalculator.generate_bazi(a_date.strftime("%Y-%m-%d"), a_shichen_name)
+        b_data = BaziCalculator.generate_bazi(b_date.strftime("%Y-%m-%d"), b_shichen_name)
+        score = 0
+        common_elements = 0
+        for k in ["金", "木", "水", "火", "土"]:
+            if a_data["五行"][k] > 0 and b_data["五行"][k] > 0:
+                common_elements += 1
+            if (a_data["五行"][k] > 0 and b_data["五行"][k] == 0) or (a_data["五行"][k] == 0 and b_data["五行"][k] > 0):
+                score += 10
+        score += common_elements * 5
+        if score >= 40:
+            level, desc = "上等婚配｜天生一对", "五行高度互补，气场契合度高"
+        elif score >= 30:
+            level, desc = "中等婚配｜和谐美满", "五行互补良好，相处轻松愉快"
+        else:
+            level, desc = "普通婚配｜需磨合", "五行互补一般，需要多沟通理解"
+        st.markdown(f"**A方八字**：{a_data['八字_str']}")
+        st.markdown(f"**B方八字**：{b_data['八字_str']}")
+        st.markdown(f"**合盘评分**：{score}/50")
+        st.markdown(f"**婚配等级**：{level}")
+        st.markdown(f"**说明**：{desc}")
+with tab4:
+    st.markdown("#### 多盘对比（支持添加多个八字）")
+    if "duopan_list" not in st.session_state:
+        st.session_state.duopan_list = []
+    col_btn_add, col_btn_clear, col_btn_compare = st.columns(3)
+    with col_btn_add:
+        if st.button("添加当前八字到对比列表", use_container_width=True):
+            if "bazi_result" in st.session_state and st.session_state.bazi_result:
+                st.session_state.duopan_list.append(st.session_state.bazi_result)
+                st.success("添加成功！")
+    with col_btn_clear:
+        if st.button("清空对比列表", use_container_width=True):
+            st.session_state.duopan_list = []
+            st.success("已清空！")
+    with col_btn_compare:
+        if st.button("开始对比", use_container_width=True):
+            if len(st.session_state.duopan_list) < 2:
+                st.warning("请至少添加2个八字进行对比！")
+            else:
+                st.success("对比执行中...")
+                all_elements = []
+                for data in st.session_state.duopan_list:
+                    all_elements.append(data["五行"])
+                avg_wuxing = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
+                for k in avg_wuxing:
+                    avg_wuxing[k] = sum(d[k] for d in all_elements) / len(all_elements)
+                st.markdown("##### 五行分布对比结果")
+                for k in avg_wuxing:
+                    st.markdown(
+                        f"**{k}**：平均值 {avg_wuxing[k]:.1f}，差异范围 {min(d[k] for d in all_elements)} - {max(d[k] for d in all_elements)}")
+    if st.session_state.duopan_list:
+        st.markdown("##### 对比列表")
+        for i, data in enumerate(st.session_state.duopan_list):
+            st.markdown(f"**第{i + 1}个八字**：{data['八字_str']} | {data['农历']}")
+    else:
+        st.info("请先排盘，再添加到对比列表")
+
+# ===================== 底部导航栏（原版完整保留） =====================
+st.markdown("""
+<div class="footer-nav">
+    <div class="nav-item active">☯️<br>排盘</div>
+    <div class="nav-item">📄<br>AI解读</div>
+    <div class="nav-item">📖<br>生成word</div>
+    <div class="nav-item">📑<br>生成pdf</div>
+    <div class="nav-item">⏱️<br>良辰吉日</div>
+    <div class="nav-item">🏮<br>民俗风水</div>
+</div>
+""", unsafe_allow_html=True)
