@@ -174,9 +174,9 @@ with st.container(border=True):
         with col_lun_day:
             st.markdown("**农历日**")
             lunar_day_input = st.number_input("", 1, 30, 1, label_visibility="collapsed")
-        st.markdown("**是否闰月**")
-        leap_option = st.radio("", ["否（平月）", "是（闰月）"], horizontal=True, label_visibility="collapsed")
-        is_leap_input = 1 if leap_option == "是（闰月）" else 0
+        st.markdown("**平月/闰月**")
+        leap_option = st.radio("", ["平月", "闰月"], horizontal=True, label_visibility="collapsed")
+        is_leap_input = 1 if leap_option == "闰月" else 0
         date_str = lunar_to_solar_from_db(lunar_year_input, lunar_month_input, lunar_day_input, is_leap_input)
 
     st.markdown("**出生地区**")
