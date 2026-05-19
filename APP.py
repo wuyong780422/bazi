@@ -133,8 +133,6 @@ div.stRadio>div {display:flex;gap:12px;justify-content:center;flex-wrap:nowrap !
 div.stRadio label {background:#FFF;border-radius:20px;padding:8px 20px;border:1px solid #EEE;font-size:14px;white-space:nowrap;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
-div.stColumns { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 10px !important; }
-div.stColumn { flex: 1 !important; min-width: 0 !important; }
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
 .nav-item.active {color:#9370DB;}
