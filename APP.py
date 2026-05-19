@@ -123,7 +123,7 @@ page_bg = """
 <style>
 body {margin: 0;padding: 0;background-color:#E5E5E5;}
 .stApp {background-color:#E5E5E5;padding: 0;}
-div.block-container {padding-top: 40px !important;padding-left:20px !important;padding-right:20px !important;padding-bottom:60px !important;}
+div.block-container {padding-top: 50px !important;padding-left:20px !important;padding-right:20px !important;padding-bottom:60px !important;}
 div.stContainer {background:#F0F0F0;border-radius:12px;padding:15px;}
 div.stTextInput>div>div {border-radius:8px; background:#FFF;}
 div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
@@ -133,6 +133,8 @@ div.stRadio>div {display:flex;gap:12px;justify-content:center;flex-wrap:nowrap !
 div.stRadio label {background:#FFF;border-radius:20px;padding:8px 20px;border:1px solid #EEE;font-size:14px;white-space:nowrap;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
+div.stColumns { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 10px !important; }
+div.stColumn { flex: 1 !important; min-width: 0 !important; }
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
 .nav-item.active {color:#9370DB;}
@@ -183,7 +185,8 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    col_btn1, col_btn2 = st.columns(2)
+    # 关键修改：设置两个按钮为 1:1 等宽列，强制水平排列
+    col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
         if st.button("开始排盘", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
