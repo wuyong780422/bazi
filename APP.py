@@ -130,7 +130,7 @@ div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
 div.stDateInput>div>div {border-radius:8px; background:#FFF;}
 div.stNumberInput>div>div {border-radius:8px; background:#FFF;}
 div.stRadio>div {display:flex;gap:12px;justify-content:center;flex-wrap:nowrap !important;}
-div.stRadio label {background:#FFF;border-radius:20px;padding:8px 20px;border:1px solid #EEE;font-size:14px;white-space:nowrap;}
+div.stRadio label {background:#FFF;border-radius:20px;padding:8px 16px;border:1px solid #EEE;font-size:14px;white-space:nowrap;max-width: 45vw;box-sizing: border-box;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
@@ -183,7 +183,7 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # 关键修改：设置两个按钮为 1:1 等宽列，强制水平排列
+    # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
     col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
         if st.button("开始排盘", use_container_width=True):
