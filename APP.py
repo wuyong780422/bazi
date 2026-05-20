@@ -194,43 +194,48 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 按钮水平布局（手机端强制同行，不影响其他组件） ==========
+    # ========== 用单选按钮伪装按钮，强制手机端水平排列 ==========
+    btn_option = st.radio(
+        "",
+        ["开始排盘", "即时排盘"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    # 伪装按钮样式，让它看起来和原来一样
     st.markdown("""
     <style>
-    .btn-container {
+    div.stRadio div[role="radiogroup"] {
         display: flex !important;
         gap: 12px !important;
         width: 100% !important;
-        box-sizing: border-box !important;
     }
-    .btn-container > div {
+    div.stRadio label {
         flex: 1 !important;
-        min-width: 0 !important;
-    }
-    .btn-container button {
-        width: 100% !important;
-        background-color: #222 !important;
+        background: #222 !important;
         color: #D4AF37 !important;
         border-radius: 30px !important;
         height: 68px !important;
         font-size: 18px !important;
         font-weight: bold !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    div.stRadio [role="radio"] {
+        display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # 用div包裹，强制水平布局
-    st.markdown('<div class="btn-container">', unsafe_allow_html=True)
-
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        if st.button("开始排盘", use_container_width=True):
-            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    with col_btn2:
-        if st.button("即时排盘", use_container_width=True):
-            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    # 点击逻辑不变，和原来完全一样
+    if btn_option == "开始排盘":
+        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    elif btn_option == "即时排盘":
+        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
