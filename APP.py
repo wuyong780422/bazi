@@ -129,8 +129,9 @@ div.stTextInput>div>div {border-radius:8px; background:#FFF;}
 div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
 div.stDateInput>div>div {border-radius:8px; background:#FFF;}
 div.stNumberInput>div>div {border-radius:8px; background:#FFF;}
-div.stRadio>div {display:flex;gap:12px;justify-content:center;flex-wrap:nowrap !important;}
-div.stRadio label {background:#FFF;border-radius:20px;padding:8px 16px;border:1px solid #EEE;font-size:14px;white-space:nowrap;max-width: 45vw;box-sizing: border-box;}
+/* 关键修复：只让radio自适应，不影响按钮 */
+div.stRadio>div {display:flex;gap:8px;justify-content:center;flex-wrap:wrap !important;max-width:100%;}
+div.stRadio label {background:#FFF;border-radius:20px;padding:8px 16px;border:1px solid #EEE;font-size:14px;white-space:nowrap;box-sizing:border-box;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
