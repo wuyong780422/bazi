@@ -194,50 +194,64 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 按钮水平布局终极方案（原生按钮+强制锁定） ==========
-    # 给按钮区域加一个唯一的父容器
-    st.markdown("""
+    # ========== 原生HTML按钮，100%手机端同行，无任何布局限制 ==========
+    import streamlit.components.v1 as components
+
+    # 定义HTML按钮代码，用原生flex布局，不受Streamlit影响
+    button_html = """
     <style>
-    /* 全局锁定按钮区域，不受响应式影响 */
-    #button-row-wrapper {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 12px !important;
-        width: 100% !important;
+    .btn-container {
+        display: flex;
+        gap: 12px;
+        width: 100%;
         margin: 10px 0;
     }
-    #button-row-wrapper > div {
-        flex: 1 !important;
-        min-width: 0 !important;
+    .btn-container button {
+        flex: 1;
+        background-color: #222222;
+        color: #D4AF37;
+        border: none;
+        border-radius: 30px;
+        height: 68px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
     }
-    #button-row-wrapper button {
-        width: 100% !important;
-        background-color: #222222 !important;
-        color: #D4AF37 !important;
-        border-radius: 30px !important;
-        height: 68px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-    }
-    /* 强制Streamlit不要把列改成垂直布局 */
-    #button-row-wrapper .stColumns {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
+    .btn-container button:active {
+        opacity: 0.8;
     }
     </style>
-    """, unsafe_allow_html=True)
 
-    # 用HTML给按钮区域加上唯一ID，确保样式只对这里生效
-    st.markdown('<div id="button-row-wrapper">', unsafe_allow_html=True)
-    col_btn1, col_btn2 = st.columns(2, gap="small")
-    with col_btn1:
-        if st.button("开始排盘", use_container_width=True, key="begin_pan_final"):
-            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    with col_btn2:
-        if st.button("即时排盘", use_container_width=True, key="instant_pan_final"):
-            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-    st.markdown('</div>', unsafe_allow_html=True)
+    <div class="btn-container">
+        <button id="beginBtn">开始排盘</button>
+        <button id="instantBtn">即时排盘</button>
+    </div>
+
+    <script>
+    // 监听按钮点击，给Streamlit发送信号
+    const beginBtn = document.getElementById('beginBtn');
+    const instantBtn = document.getElementById('instantBtn');
+
+    beginBtn.addEventListener('click', () => {
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'begin'}, '*');
+    });
+    instantBtn.addEventListener('click', () => {
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'instant'}, '*');
+    });
+    </script>
+    """
+
+    # 嵌入HTML按钮
+    components.html(button_html, height=100)
+
+    # 隐藏的信号接收组件，用来触发Streamlit的逻辑
+    action = st.selectbox("", ["", "begin", "instant"], index=0, label_visibility="collapsed", key="btn_action")
+
+    # 执行排盘逻辑
+    if action == "begin":
+        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    elif action == "instant":
+        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
