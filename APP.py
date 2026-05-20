@@ -194,50 +194,52 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 按钮布局最终版（和性别/历法一样稳定，无额外组件） ==========
-    # 1. 先给按钮加一个唯一的父容器，避免被其他组件影响
-    with st.container():
-        st.markdown("""
-        <style>
-        /* 只针对这个容器内的按钮生效 */
-        .btn-row-container {
-            display: flex !important;
-            gap: 12px !important;
-            width: 100% !important;
-            margin: 10px 0;
-        }
-        .btn-row-container > div {
-            flex: 1 !important;
-            min-width: 0 !important;
-        }
-        .btn-row-container button {
-            width: 100% !important;
-            background-color: #222222 !important;
-            color: #D4AF37 !important;
-            border-radius: 30px !important;
-            height: 68px !important;
-            font-size: 18px !important;
-            font-weight: bold !important;
-            border: none !important;
-        }
-        /* 强制Streamlit不要把列改成垂直布局 */
-        .btn-row-container .stColumns {
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    # ========== 终极版：用单选按钮伪装按钮，100%手机端同行 ==========
+    # 1. 用st.radio来做按钮，和性别/历法是同一个组件，Streamlit不会改成垂直布局
+    btn_action = st.radio(
+        "",
+        ["开始排盘", "即时排盘"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="pan_btn_radio"
+    )
 
-        # 2. 用st.columns写按钮，和性别/历法一样的逻辑
-        st.markdown('<div class="btn-row-container">', unsafe_allow_html=True)
-        col_btn1, col_btn2 = st.columns(2, gap="small")
-        with col_btn1:
-            if st.button("开始排盘", use_container_width=True, key="begin_pan"):
-                st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-        with col_btn2:
-            if st.button("即时排盘", use_container_width=True, key="instant_pan"):
-                st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # 2. 用CSS把单选按钮伪装成按钮样式，和你原来的设计完全一致
+    st.markdown("""
+    <style>
+    /* 只针对这个按钮生效，不影响其他组件 */
+    div[role="radiogroup"][data-testid="stHorizontalRadio"] {
+        display: flex !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin: 10px 0;
+    }
+    div[role="radiogroup"][data-testid="stHorizontalRadio"] label {
+        flex: 1 !important;
+        background: #222 !important;
+        color: #D4AF37 !important;
+        border-radius: 30px !important;
+        height: 68px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    div[role="radiogroup"][data-testid="stHorizontalRadio"] [role="radio"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 3. 执行按钮逻辑，和原来完全一样
+    if btn_action == "开始排盘":
+        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    elif btn_action == "即时排盘":
+        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
