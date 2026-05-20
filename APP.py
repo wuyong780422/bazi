@@ -194,44 +194,48 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 按钮专用水平布局（只影响按钮，不影响其他组件） ==========
-    # 给按钮加一个专属的容器
-    with st.container():
-        st.markdown("""
-        <style>
-        /* 只针对这个容器里的按钮生效 */
-        .btn-only-container .stColumns {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 12px !important;
-        }
-        .btn-only-container .stColumn {
-            flex: 1 !important;
-            width: 50% !important;
-            min-width: 0 !important;
-        }
-        .btn-only-container button {
-            width: 100% !important;
-            background-color: #222 !important;
-            color: #D4AF37 !important;
-            border-radius: 30px !important;
-            height: 68px !important;
-            font-size: 18px !important;
-            font-weight: bold !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    # ========== 按钮水平布局终极版（仅作用于按钮，不影响其他组件） ==========
+    # 先定义按钮的样式，给它们一个固定的ID
+    st.markdown("""
+    <style>
+    /* 只针对这两个按钮生效，不影响其他组件 */
+    div#begin-pan-btn, div#instant-pan-btn {
+        display: inline-block !important;
+        width: 48% !important;
+        margin: 0 1% !important;
+        vertical-align: top !important;
+    }
+    div#begin-pan-btn button, div#instant-pan-btn button {
+        width: 100% !important;
+        background-color: #222 !important;
+        color: #D4AF37 !important;
+        border-radius: 30px !important;
+        height: 68px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-        st.markdown('<div class="btn-only-container">', unsafe_allow_html=True)
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("开始排盘", use_container_width=True):
-                st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-        with col_btn2:
-            if st.button("即时排盘", use_container_width=True):
-                st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # 用st.empty()来定位按钮，然后用CSS强制水平排列
+    col1 = st.empty()
+    col2 = st.empty()
+
+    with col1.container():
+        if st.button("开始排盘", use_container_width=True, key="begin_pan"):
+            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    with col2.container():
+        if st.button("即时排盘", use_container_width=True, key="instant_pan"):
+            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+
+    # 给按钮加上自定义ID
+    st.markdown("""
+    <script>
+    // 给按钮的父容器加上ID，让上面的CSS生效
+    document.querySelector('[data-testid="stVerticalBlock"]:has(#begin_pan)').id = 'begin-pan-btn';
+    document.querySelector('[data-testid="stVerticalBlock"]:has(#instant_pan)').id = 'instant-pan-btn';
+    </script>
+    """, unsafe_allow_html=True)
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
