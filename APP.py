@@ -184,20 +184,18 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 最终方案：用 st.radio 伪装按钮，100%手机端同行 ==========
-    # 1. 用水平单选按钮做“按钮”，Streamlit原生支持，不会被强制换行
+    # ========== 用短文字的水平单选按钮，100%手机端同行 ==========
     btn_action = st.radio(
         "",
-        ["开始排盘", "即时排盘"],
+        ["排盘", "实时"],  # 这里改成短文字
         horizontal=True,
         label_visibility="collapsed",
         key="pan_btn_final"
     )
 
-    # 2. 用CSS把单选按钮伪装成和你设计完全一样的黑色按钮，且不影响其他组件
+    # CSS样式（和之前一样，只针对这个按钮组生效）
     st.markdown("""
     <style>
-    /* 只针对这个按钮组生效，不影响性别/历法 */
     div[data-testid="stHorizontalRadio"][key="pan_btn_final"] {
         display: flex !important;
         gap: 12px !important;
@@ -227,10 +225,10 @@ with st.container(border=True):
     </style>
     """, unsafe_allow_html=True)
 
-    # 3. 执行排盘逻辑，和原来完全一样
-    if btn_action == "开始排盘":
+    # 逻辑不变
+    if btn_action == "排盘":
         st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    elif btn_action == "即时排盘":
+    elif btn_action == "实时":
         st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
