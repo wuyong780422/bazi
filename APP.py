@@ -1,6 +1,6 @@
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
-# 本地/云端通用，不修改数据库逻辑，不破坏现有功能
+# 本地/云端通用，不修改数据库逻辑，不破坏现有功能  streamlit run APP.py
 # ==========================================================
 import streamlit as st
 import sqlite3
@@ -190,70 +190,31 @@ with st.container(border=True):
     true_sun_time = "1990-01-01 00:00"
     lat, lon = "北纬39.93", "东经116.42"
 
-    st.markdown("**出生时辰**")
-    selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
-    shichen_input = selected_shichen_detail.split(" ")[0]
+    # ========== 把时辰选择、两个按钮放在同一行，强制手机端不换行 ==========
+    # 用三列布局，把下拉框和按钮都放进去
+    col_time, col_btn1, col_btn2 = st.columns([2, 1, 1], gap="small")
 
-    # ========== 原生HTML按钮，100%手机端同行，无任何布局限制 ==========
-    import streamlit.components.v1 as components
+    with col_time:
+        birth_hour = st.selectbox(
+            "出生时辰",
+            ["子时 23:00-01:00", "丑时 01:00-03:00", "寅时 03:00-05:00",
+             "卯时 05:00-07:00", "辰时 07:00-09:00", "巳时 09:00-11:00",
+             "午时 11:00-13:00", "未时 13:00-15:00", "申时 15:00-17:00",
+             "酉时 17:00-19:00", "戌时 19:00-21:00", "亥时 21:00-23:00"],
+            index=6,
+            key="birth_hour_final"
+        )
+        # 保持原来的时辰解析逻辑不变
+        shichen_input = birth_hour.split(" ")[0]
 
-    # 定义HTML按钮代码，用原生flex布局，不受Streamlit影响
-    button_html = """
-    <style>
-    .btn-container {
-        display: flex;
-        gap: 12px;
-        width: 100%;
-        margin: 10px 0;
-    }
-    .btn-container button {
-        flex: 1;
-        background-color: #222222;
-        color: #D4AF37;
-        border: none;
-        border-radius: 30px;
-        height: 68px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    .btn-container button:active {
-        opacity: 0.8;
-    }
-    </style>
+    with col_btn1:
+        if st.button("开始排盘", use_container_width=True, key="begin_pan_final"):
+            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
 
-    <div class="btn-container">
-        <button id="beginBtn">开始排盘</button>
-        <button id="instantBtn">即时排盘</button>
-    </div>
-
-    <script>
-    // 监听按钮点击，给Streamlit发送信号
-    const beginBtn = document.getElementById('beginBtn');
-    const instantBtn = document.getElementById('instantBtn');
-
-    beginBtn.addEventListener('click', () => {
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'begin'}, '*');
-    });
-    instantBtn.addEventListener('click', () => {
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'instant'}, '*');
-    });
-    </script>
-    """
-
-    # 嵌入HTML按钮
-    components.html(button_html, height=100)
-
-    # 隐藏的信号接收组件，用来触发Streamlit的逻辑
-    action = st.selectbox("", ["", "begin", "instant"], index=0, label_visibility="collapsed", key="btn_action")
-
-    # 执行排盘逻辑
-    if action == "begin":
-        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    elif action == "instant":
-        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+    with col_btn2:
+        if st.button("即时排盘", use_container_width=True, key="instant_pan_final"):
+            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
     # =========================================================
-
     col_info, col_save = st.columns([3, 1])
     with col_info:
         st.markdown(f"""<div style="color:#666;font-size:12px;">真太阳时：{true_sun_time}<br>地址经纬：{lat} {lon}</div>""", unsafe_allow_html=True)
