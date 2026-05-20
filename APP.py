@@ -187,7 +187,7 @@ with st.container(border=True):
     # ========== 用短文字的水平单选按钮，100%手机端同行 ==========
     btn_action = st.radio(
         "",
-        ["排盘", "实时"],  # 这里改成短文字
+        ["开始算", "实时算"],  # 这里改成短文字
         horizontal=True,
         label_visibility="collapsed",
         key="pan_btn_final"
@@ -226,9 +226,9 @@ with st.container(border=True):
     """, unsafe_allow_html=True)
 
     # 逻辑不变
-    if btn_action == "排盘":
+    if btn_action == "开始算":
         st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    elif btn_action == "实时":
+    elif btn_action == "实时算":
         st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
