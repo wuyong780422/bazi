@@ -134,6 +134,16 @@ div.stRadio>div {display:flex;gap:8px;justify-content:center;flex-wrap:wrap !imp
 div.stRadio label {background:#FFF;border-radius:20px;padding:8px 16px;border:1px solid #EEE;font-size:14px;white-space:nowrap;box-sizing:border-box;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
+/* 强制按钮在手机端保持水平排列 */
+div.st-key-begin_pan + div.st-key-instant_pan {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+}
+div.st-key-begin_pan, div.st-key-instant_pan {
+    flex: 1 !important;
+    width: 50% !important;
+}
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
 .nav-item.active {color:#9370DB;}
@@ -187,10 +197,10 @@ with st.container(border=True):
     # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
     col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
-        if st.button("开始排盘", use_container_width=True):
+        if st.button("开始排盘", use_container_width=True, key="begin_pan"):
             st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
     with col_btn2:
-        if st.button("即时排盘", use_container_width=True):
+        if st.button("即时排盘", use_container_width=True, key="instant_pan"):
             st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
