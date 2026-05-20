@@ -194,48 +194,66 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 按钮水平布局终极版（仅作用于按钮，不影响其他组件） ==========
-    # 先定义按钮的样式，给它们一个固定的ID
-    st.markdown("""
+    # ========== 原生HTML按钮方案（100%手机端同行，不影响其他组件） ==========
+    # 用HTML写按钮，直接嵌入Streamlit，不会被响应式布局影响
+    btn_html = """
     <style>
-    /* 只针对这两个按钮生效，不影响其他组件 */
-    div#begin-pan-btn, div#instant-pan-btn {
-        display: inline-block !important;
-        width: 48% !important;
-        margin: 0 1% !important;
-        vertical-align: top !important;
+    .btn-wrapper {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+        margin: 10px 0;
     }
-    div#begin-pan-btn button, div#instant-pan-btn button {
-        width: 100% !important;
-        background-color: #222 !important;
-        color: #D4AF37 !important;
-        border-radius: 30px !important;
-        height: 68px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
+    .btn-wrapper button {
+        flex: 1;
+        background-color: #222222;
+        color: #D4AF37;
+        border: none;
+        border-radius: 30px;
+        height: 68px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .btn-wrapper button:active {
+        opacity: 0.8;
     }
     </style>
-    """, unsafe_allow_html=True)
 
-    # 用st.empty()来定位按钮，然后用CSS强制水平排列
-    col1 = st.empty()
-    col2 = st.empty()
+    <div class="btn-wrapper">
+        <button id="begin-btn">开始排盘</button>
+        <button id="instant-btn">即时排盘</button>
+    </div>
 
-    with col1.container():
-        if st.button("开始排盘", use_container_width=True, key="begin_pan"):
-            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    with col2.container():
-        if st.button("即时排盘", use_container_width=True, key="instant_pan"):
-            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-
-    # 给按钮加上自定义ID
-    st.markdown("""
     <script>
-    // 给按钮的父容器加上ID，让上面的CSS生效
-    document.querySelector('[data-testid="stVerticalBlock"]:has(#begin_pan)').id = 'begin-pan-btn';
-    document.querySelector('[data-testid="stVerticalBlock"]:has(#instant_pan)').id = 'instant-pan-btn';
+    // 点击按钮时，给Streamlit发送信号
+    document.getElementById('begin-btn').addEventListener('click', function() {
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: 'begin_pan'
+        }, '*');
+    });
+    document.getElementById('instant-btn').addEventListener('click', function() {
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: 'instant_pan'
+        }, '*');
+    });
     </script>
-    """, unsafe_allow_html=True)
+    """
+
+    # 嵌入HTML按钮
+    st.components.v1.html(btn_html, height=100)
+
+    # 隐藏的Streamlit组件，用来接收HTML按钮的点击信号
+    clicked_btn = st.selectbox("", ["", "begin_pan", "instant_pan"], index=0, label_visibility="collapsed",
+                               key="btn_signal")
+
+    # 执行按钮逻辑
+    if clicked_btn == "begin_pan":
+        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    elif clicked_btn == "instant_pan":
+        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
