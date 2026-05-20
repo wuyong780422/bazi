@@ -194,66 +194,50 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 原生HTML按钮方案（100%手机端同行，不影响其他组件） ==========
-    # 用HTML写按钮，直接嵌入Streamlit，不会被响应式布局影响
-    btn_html = """
-    <style>
-    .btn-wrapper {
-        display: flex;
-        gap: 12px;
-        width: 100%;
-        margin: 10px 0;
-    }
-    .btn-wrapper button {
-        flex: 1;
-        background-color: #222222;
-        color: #D4AF37;
-        border: none;
-        border-radius: 30px;
-        height: 68px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    .btn-wrapper button:active {
-        opacity: 0.8;
-    }
-    </style>
+    # ========== 按钮布局最终版（和性别/历法一样稳定，无额外组件） ==========
+    # 1. 先给按钮加一个唯一的父容器，避免被其他组件影响
+    with st.container():
+        st.markdown("""
+        <style>
+        /* 只针对这个容器内的按钮生效 */
+        .btn-row-container {
+            display: flex !important;
+            gap: 12px !important;
+            width: 100% !important;
+            margin: 10px 0;
+        }
+        .btn-row-container > div {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        .btn-row-container button {
+            width: 100% !important;
+            background-color: #222222 !important;
+            color: #D4AF37 !important;
+            border-radius: 30px !important;
+            height: 68px !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            border: none !important;
+        }
+        /* 强制Streamlit不要把列改成垂直布局 */
+        .btn-row-container .stColumns {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-    <div class="btn-wrapper">
-        <button id="begin-btn">开始排盘</button>
-        <button id="instant-btn">即时排盘</button>
-    </div>
-
-    <script>
-    // 点击按钮时，给Streamlit发送信号
-    document.getElementById('begin-btn').addEventListener('click', function() {
-        window.parent.postMessage({
-            type: 'streamlit:setComponentValue',
-            value: 'begin_pan'
-        }, '*');
-    });
-    document.getElementById('instant-btn').addEventListener('click', function() {
-        window.parent.postMessage({
-            type: 'streamlit:setComponentValue',
-            value: 'instant_pan'
-        }, '*');
-    });
-    </script>
-    """
-
-    # 嵌入HTML按钮
-    st.components.v1.html(btn_html, height=100)
-
-    # 隐藏的Streamlit组件，用来接收HTML按钮的点击信号
-    clicked_btn = st.selectbox("", ["", "begin_pan", "instant_pan"], index=0, label_visibility="collapsed",
-                               key="btn_signal")
-
-    # 执行按钮逻辑
-    if clicked_btn == "begin_pan":
-        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    elif clicked_btn == "instant_pan":
-        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+        # 2. 用st.columns写按钮，和性别/历法一样的逻辑
+        st.markdown('<div class="btn-row-container">', unsafe_allow_html=True)
+        col_btn1, col_btn2 = st.columns(2, gap="small")
+        with col_btn1:
+            if st.button("开始排盘", use_container_width=True, key="begin_pan"):
+                st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+        with col_btn2:
+            if st.button("即时排盘", use_container_width=True, key="instant_pan"):
+                st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+        st.markdown('</div>', unsafe_allow_html=True)
     # =========================================================
 
     col_info, col_save = st.columns([3, 1])
