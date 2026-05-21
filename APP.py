@@ -220,7 +220,7 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     /* 定位表格单元格 */
     div[data-testid="stTable"] td {
         text-align: center !important;
-        font-size: 40px !important; /* ← 这里直接改数字，比如22/24/28px */
+        font-size: 26px !important; /* ← 这里直接改数字，比如22/24/28px */
         font-weight: bold !important;
         color: #333 !important;
     }
@@ -234,7 +234,7 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     /* 手机端适配，避免字体太大 */
     @media (max-width: 600px) {
         div[data-testid="stTable"] td {
-            font-size: 28px !important; /* 手机上的八字字体大小 */
+            font-size: 30px !important; /* 手机上的八字字体大小 */
         }
         div[data-testid="stTable"] th {
             font-size: 12px !important;
