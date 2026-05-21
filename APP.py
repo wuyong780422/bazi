@@ -204,22 +204,46 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     st.markdown("---")
     st.success("✅ 排盘完成")
 
-    # 原生表格：手机/电脑 永远水平四列
+    # 原生表格：手机/电脑 水平四列 + 居中 + 字体大小生效
     import pandas as pd
+
     df = pd.DataFrame({
         "年柱": [r["八字"][0]],
         "月柱": [r["八字"][1]],
         "日柱": [r["八字"][2]],
         "时柱": [r["八字"][3]]
     })
-    # 核心修改：设置所有单元格文字居中
-    styled_df = df.style.set_properties(**{
-        'text-align': 'center',
-        'font-size': '38px',  # 可选：调整字号，让手机上更美观
-        'font-weight': 'bold'  # 可选：加粗，和原来的显示风格统一
-    })
 
-    st.table(styled_df)
+    # 用更精准的选择器强制修改字体，100%生效
+    st.markdown("""
+    <style>
+    /* 定位表格单元格 */
+    div[data-testid="stTable"] td {
+        text-align: center !important;
+        font-size: 40px !important; /* ← 这里直接改数字，比如22/24/28px */
+        font-weight: bold !important;
+        color: #333 !important;
+    }
+    /* 表头单独控制 */
+    div[data-testid="stTable"] th {
+        text-align: center !important;
+        font-size: 14px !important;
+        font-weight: normal !important;
+        color: #666 !important;
+    }
+    /* 手机端适配，避免字体太大 */
+    @media (max-width: 600px) {
+        div[data-testid="stTable"] td {
+            font-size: 28px !important; /* 手机上的八字字体大小 */
+        }
+        div[data-testid="stTable"] th {
+            font-size: 12px !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.table(df)
     st.markdown(f"**公历**：{r['公历']}")
     st.markdown(f"**农历**：{r['农历']}")
     st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}")
