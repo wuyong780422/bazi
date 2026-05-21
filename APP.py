@@ -142,9 +142,41 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 st.markdown(page_bg, unsafe_allow_html=True)
 # ===================== 界面与功能（仅优化性别/历法布局，和性别一样一行显示） =====================
 with st.container(border=True):
-    col_name_label, col_name_input = st.columns([1, 4])
-    with col_name_label: st.markdown("**姓名**")
-    with col_name_input: name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed")
+    # ========== 姓名标签+输入框 手机端同行布局 ==========
+    # 1. 先加CSS锁定布局，不受手机端响应式影响
+    st.markdown("""
+    <style>
+    /* 给姓名行加唯一容器，只对这里生效 */
+    #name-row-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin: 10px 0;
+    }
+    #name-row-wrapper > div {
+        flex-shrink: 0 !important;
+    }
+    #name-row-wrapper .stTextInput {
+        flex-grow: 1 !important;
+    }
+    #name-row-wrapper label {
+        font-weight: bold !important;
+        font-size: 16px !important;
+        white-space: nowrap !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 2. 用HTML包裹列布局，强制水平排列
+    st.markdown('<div id="name-row-wrapper">', unsafe_allow_html=True)
+    col_name_label, col_name_input = st.columns([1, 4])  # 1:4比例，标签固定宽度，输入框自适应
+    with col_name_label:
+        st.markdown("姓名")  # 用纯文本标签，避免st.column的自动换行
+    with col_name_input:
+        name = st.text_input("请输入姓名", label_visibility="collapsed")  # 隐藏默认标签
+    st.markdown('</div>', unsafe_allow_html=True)
+    # =========================================================
 
     # 优化点：性别和历法放在同一行两列，和性别一样一行显示
     col_gender, col_cal = st.columns(2)
@@ -176,7 +208,7 @@ with st.container(border=True):
         date_str = lunar_to_solar_from_db(lunar_year_input, lunar_month_input, lunar_day_input, is_leap_input)
 
     st.markdown("**出生地区**")
-    birth_area = st.selectbox("", ["北京", "四川", "上海", "广州", "深圳"], index=0, label_visibility="collapsed")
+    birth_area = st.selectbox("", ["北京", "未知地区（北京时间）", "上海", "广州", "深圳"], index=0, label_visibility="collapsed")
     true_sun_time = "1990-01-01 00:00"
     lat, lon = "北纬39.93", "东经116.42"
 
@@ -184,52 +216,14 @@ with st.container(border=True):
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ========== 用短文字的水平单选按钮，100%手机端同行 ==========
-    btn_action = st.radio(
-        "",
-        ["开始算", "实时算"],  # 这里改成短文字
-        horizontal=True,
-        label_visibility="collapsed",
-        key="pan_btn_final"
-    )
-
-    # CSS样式（和之前一样，只针对这个按钮组生效）
-    st.markdown("""
-    <style>
-    div[data-testid="stHorizontalRadio"][key="pan_btn_final"] {
-        display: flex !important;
-        gap: 12px !important;
-        width: 100% !important;
-        margin: 10px 0;
-        justify-content: center;
-    }
-    div[data-testid="stHorizontalRadio"][key="pan_btn_final"] label {
-        flex: 1 !important;
-        max-width: 45% !important;
-        background: #222222 !important;
-        color: #D4AF37 !important;
-        border-radius: 30px !important;
-        height: 68px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    div[data-testid="stHorizontalRadio"][key="pan_btn_final"] [role="radio"] {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # 逻辑不变
-    if btn_action == "开始算":
-        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    elif btn_action == "实时算":
-        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+    # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
+    col_btn1, col_btn2 = st.columns(2, gap="small")
+    with col_btn1:
+        if st.button("开始排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    with col_btn2:
+        if st.button("即时排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
     with col_info:
