@@ -357,7 +357,7 @@ st.markdown("""
     <div class="nav-item">📄<br>AI解读</div>
     <div class="nav-item">⏱️<br>良辰吉日</div>
     <div class="nav-item">🏮<br>民俗风水</div>
-    <div class="nav-item"><br>+</div>
-    <div class="nav-item"><br>+</div>
+    <div class="nav-item">⏱️<br>+</div>
+    <div class="nav-item">⏱️<br>+</div>
 </div>
 """, unsafe_allow_html=True)
