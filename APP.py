@@ -354,10 +354,10 @@ with tab4:
 st.markdown("""
 <div class="footer-nav">
     <div class="nav-item active">☯️<br>排盘</div>
-    <div class="nav-item">📄<br>AI解读</div>
-    <div class="nav-item">⏱️<br>良辰吉日</div>
-    <div class="nav-item">🏮<br>民俗风水</div>
-    <div class="nav-item">⏱️<br>+</div>
-    <div class="nav-item">⏱️<br>+</div>
+    <div class="nav-item">📄<br>解读</div>
+    <div class="nav-item">⏱️<br>吉日</div>
+    <div class="nav-item">🏮<br>风水</div>
+    <div class="nav-item">🏮<br>---</div>
+    <div class="nav-item">🏮<br>---</div>
 </div>
 """, unsafe_allow_html=True)
