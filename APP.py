@@ -199,13 +199,8 @@ with st.container(border=True):
     with col_save:
         save_toggle = st.toggle("保存", value=False)
 
+# ========== 四柱显示：居中+字体大小自由控制 ==========
 if "bazi_result" in st.session_state and st.session_state.bazi_result:
-    r = st.session_state.bazi_result
-    st.markdown("---")
-    st.success("✅ 排盘完成")
-
-    # ========== 四柱显示：居中+字体大小自由控制 ==========
-    if "bazi_result" in st.session_state and st.session_state.bazi_result:
         r = st.session_state.bazi_result
         st.markdown("---")
         st.success("✅ 排盘完成")
@@ -229,13 +224,13 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
             background-color: #f8f8f8;
         }}
         .custom-table td {{
-            font-size: 26px; /* ← 八字文字大小，改这里！ */
+            font-size: 28px; /* ← 八字文字大小，改这里！ */
             font-weight: bold;
             color: #333;
         }}
         @media (max-width: 600px) {{
             .custom-table th {{ font-size: 12px; }}
-            .custom-table td {{ font-size: 22px; /* 手机端八字大小 */ }}
+            .custom-table td {{ font-size: 28px; /* 手机端八字大小 */ }}
         }}
         </style>
 
