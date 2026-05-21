@@ -215,7 +215,7 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     # 核心修改：设置所有单元格文字居中
     styled_df = df.style.set_properties(**{
         'text-align': 'center',
-        'font-size': '28px',  # 可选：调整字号，让手机上更美观
+        'font-size': '38px',  # 可选：调整字号，让手机上更美观
         'font-weight': 'bold'  # 可选：加粗，和原来的显示风格统一
     })
 
