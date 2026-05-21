@@ -190,7 +190,32 @@ with st.container(border=True):
     """, unsafe_allow_html=True)
 
     st.markdown("**出生时辰**")
-    selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
+
+    # 把12个时辰分成两列，在手机上也能完全显示
+    col1, col2 = st.columns(2)
+    with col1:
+        shichen1 = st.radio(
+            "",
+            ["子时 23:00-01:00", "丑时 01:00-03:00", "寅时 03:00-05:00", "卯时 05:00-07:00", "辰时 07:00-09:00",
+             "巳时 09:00-11:00"],
+            index=5,  # 对应"巳时"，和你原来的index=6（午时）错开
+            label_visibility="collapsed"
+        )
+    with col2:
+        shichen2 = st.radio(
+            "",
+            ["午时 11:00-13:00", "未时 13:00-15:00", "申时 15:00-17:00", "酉时 17:00-19:00", "戌时 19:00-21:00",
+             "亥时 21:00-23:00"],
+            index=0,  # 默认选中"午时"，和原来的index=6效果一致
+            label_visibility="collapsed"
+        )
+
+    # 处理用户的选择：判断是选了左边还是右边
+    if shichen1 != "":
+        selected_shichen_detail = shichen1
+    else:
+        selected_shichen_detail = shichen2
+
     shichen_input = selected_shichen_detail.split(" ")[0]
 
     # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
