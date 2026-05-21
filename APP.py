@@ -130,13 +130,13 @@ div.stSelectbox>div>div {border-radius:8px; background:#FFF;}
 div.stDateInput>div>div {border-radius:8px; background:#FFF;}
 div.stNumberInput>div>div {border-radius:8px; background:#FFF;}
 /* 关键修复：只让radio自适应，不影响按钮 */
-div.stRadio div {display:flex !important; gap:8px !important; justify-content:center !important; flex-wrap:nowrap !important; max-width:100%;}
+div.stRadio>div {display:flex;gap:8px;justify-content:center;flex-wrap:wrap !important;max-width:100%;}
 div.stRadio label {background:#FFF;border-radius:20px;padding:8px 16px;border:1px solid #EEE;font-size:14px;white-space:nowrap;box-sizing:border-box;}
 div.stRadio [role="radio"]:checked + label {background:#D4AF37;color:#FFF;border-color:#D4AF37;}
 div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;height:68px;font-size:18px;font-weight:bold;width:100%;}
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
-.nav-item.active {color: #9370DB !important;}
+.nav-item.active {color:#9370DB;}
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
@@ -185,7 +185,6 @@ with st.container(border=True):
     shichen_input = selected_shichen_detail.split(" ")[0]
 
     # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
-    st.markdown('<div style="display:flex;gap:12px;">', unsafe_allow_html=True)
     col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
         if st.button("开始排盘", use_container_width=True):
@@ -193,7 +192,6 @@ with st.container(border=True):
     with col_btn2:
         if st.button("即时排盘", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.get_current_bazi()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     col_info, col_save = st.columns([3, 1])
     with col_info:
@@ -205,22 +203,16 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     r = st.session_state.bazi_result
     st.markdown("---")
     st.success("✅ 排盘完成")
-    # 修复手机端四列不换行
-    st.markdown('<div style="display:flex;gap:12px;justify-content:center;width:100%;">', unsafe_allow_html=True)
-    col_pillar = st.columns(4)
-    with col_pillar[0]: st.markdown(
-        f"<div style='text-align:center'>年柱</div><div style='text-align:center;font-size:20px;font-weight:bold'>{r['八字'][0]}</div>",
-        unsafe_allow_html=True)
-    with col_pillar[1]: st.markdown(
-        f"<div style='text-align:center'>月柱</div><div style='text-align:center;font-size:20px;font-weight:bold'>{r['八字'][1]}</div>",
-        unsafe_allow_html=True)
-    with col_pillar[2]: st.markdown(
-        f"<div style='text-align:center'>日柱</div><div style='text-align:center;font-size:20px;font-weight:bold'>{r['八字'][2]}</div>",
-        unsafe_allow_html=True)
-    with col_pillar[3]: st.markdown(
-        f"<div style='text-align:center'>时柱</div><div style='text-align:center;font-size:20px;font-weight:bold'>{r['八字'][3]}</div>",
-        unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 原生表格：手机/电脑 永远水平四列
+    import pandas as pd
+    df = pd.DataFrame({
+        "年柱": [r["八字"][0]],
+        "月柱": [r["八字"][1]],
+        "日柱": [r["八字"][2]],
+        "时柱": [r["八字"][3]]
+    })
+    st.table(df)
     st.markdown(f"**公历**：{r['公历']}")
     st.markdown(f"**农历**：{r['农历']}")
     st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}")
@@ -242,8 +234,6 @@ with tab1:
 with tab2:
     if "bazi_result" in st.session_state and st.session_state.bazi_result:
         r = st.session_state.bazi_result
-        if not r or "八字" not in r:
-            st.stop()
         w = r["五行"]
         caixing = "财星旺" if w["金"] + w["土"] > 3 else "财星弱"
         st.markdown(f"**日干**：{r['日干']}")
