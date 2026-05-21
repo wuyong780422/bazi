@@ -212,7 +212,14 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
         "日柱": [r["八字"][2]],
         "时柱": [r["八字"][3]]
     })
-    st.table(df)
+    # 核心修改：设置所有单元格文字居中
+    styled_df = df.style.set_properties(**{
+        'text-align': 'center',
+        'font-size': '28px',  # 可选：调整字号，让手机上更美观
+        'font-weight': 'bold'  # 可选：加粗，和原来的显示风格统一
+    })
+
+    st.table(styled_df)
     st.markdown(f"**公历**：{r['公历']}")
     st.markdown(f"**农历**：{r['农历']}")
     st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}")
