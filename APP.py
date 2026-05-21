@@ -142,41 +142,9 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 st.markdown(page_bg, unsafe_allow_html=True)
 # ===================== 界面与功能（仅优化性别/历法布局，和性别一样一行显示） =====================
 with st.container(border=True):
-    # ========== 姓名标签+输入框 手机端同行布局 ==========
-    # 1. 先加CSS锁定布局，不受手机端响应式影响
-    st.markdown("""
-    <style>
-    /* 给姓名行加唯一容器，只对这里生效 */
-    #name-row-wrapper {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-        margin: 10px 0;
-    }
-    #name-row-wrapper > div {
-        flex-shrink: 0 !important;
-    }
-    #name-row-wrapper .stTextInput {
-        flex-grow: 1 !important;
-    }
-    #name-row-wrapper label {
-        font-weight: bold !important;
-        font-size: 16px !important;
-        white-space: nowrap !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # 2. 用HTML包裹列布局，强制水平排列
-    st.markdown('<div id="name-row-wrapper">', unsafe_allow_html=True)
-    col_name_label, col_name_input = st.columns([1, 4])  # 1:4比例，标签固定宽度，输入框自适应
-    with col_name_label:
-        st.markdown("姓名")  # 用纯文本标签，避免st.column的自动换行
-    with col_name_input:
-        name = st.text_input("请输入姓名", label_visibility="collapsed")  # 隐藏默认标签
-    st.markdown('</div>', unsafe_allow_html=True)
-    # =========================================================
+    col_name_label, col_name_input = st.columns([1, 4])
+    with col_name_label: st.markdown("**姓名**")
+    with col_name_input: name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed")
 
     # 优化点：性别和历法放在同一行两列，和性别一样一行显示
     col_gender, col_cal = st.columns(2)
