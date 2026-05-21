@@ -204,51 +204,69 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
     st.markdown("---")
     st.success("✅ 排盘完成")
 
-    # 原生表格：手机/电脑 水平四列 + 居中 + 字体大小生效
-    import pandas as pd
+    # ========== 四柱显示：居中+字体大小自由控制 ==========
+    if "bazi_result" in st.session_state and st.session_state.bazi_result:
+        r = st.session_state.bazi_result
+        st.markdown("---")
+        st.success("✅ 排盘完成")
 
-    df = pd.DataFrame({
-        "年柱": [r["八字"][0]],
-        "月柱": [r["八字"][1]],
-        "日柱": [r["八字"][2]],
-        "时柱": [r["八字"][3]]
-    })
+        # 用HTML表格，完全自定义样式
+        pillars_html = f"""
+        <style>
+        .custom-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }}
+        .custom-table th, .custom-table td {{
+            border: 1px solid #ddd;
+            padding: 12px 8px;
+            text-align: center;
+        }}
+        .custom-table th {{
+            font-size: 14px; /* 表头文字大小 */
+            color: #666;
+            background-color: #f8f8f8;
+        }}
+        .custom-table td {{
+            font-size: 26px; /* ← 八字文字大小，改这里！ */
+            font-weight: bold;
+            color: #333;
+        }}
+        @media (max-width: 600px) {{
+            .custom-table th {{ font-size: 12px; }}
+            .custom-table td {{ font-size: 22px; /* 手机端八字大小 */ }}
+        }}
+        </style>
 
-    # 用更精准的选择器强制修改字体，100%生效
-    st.markdown("""
-    <style>
-    /* 定位表格单元格 */
-    div[data-testid="stTable"] td {
-        text-align: center !important;
-        font-size: 26px !important; /* ← 这里直接改数字，比如22/24/28px */
-        font-weight: bold !important;
-        color: #333 !important;
-    }
-    /* 表头单独控制 */
-    div[data-testid="stTable"] th {
-        text-align: center !important;
-        font-size: 14px !important;
-        font-weight: normal !important;
-        color: #666 !important;
-    }
-    /* 手机端适配，避免字体太大 */
-    @media (max-width: 600px) {
-        div[data-testid="stTable"] td {
-            font-size: 30px !important; /* 手机上的八字字体大小 */
-        }
-        div[data-testid="stTable"] th {
-            font-size: 12px !important;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>年柱</th>
+                    <th>月柱</th>
+                    <th>日柱</th>
+                    <th>时柱</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{r['八字'][0]}</td>
+                    <td>{r['八字'][1]}</td>
+                    <td>{r['八字'][2]}</td>
+                    <td>{r['八字'][3]}</td>
+                </tr>
+            </tbody>
+        </table>
+        """
+        st.markdown(pillars_html, unsafe_allow_html=True)
 
-    st.table(df)
-    st.markdown(f"**公历**：{r['公历']}")
-    st.markdown(f"**农历**：{r['农历']}")
-    st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}")
-    st.markdown(f"**日干**：{r['日干']}")
-    st.markdown(f"**五行**：金{r['五行']['金']} 木{r['五行']['木']} 水{r['五行']['水']} 火{r['五行']['火']} 土{r['五行']['土']}")
+        # 以下内容保持不变
+        st.markdown(f"**公历**：{r['公历']}")
+        st.markdown(f"**农历**：{r['农历']}")
+        st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}")
+        st.markdown(f"**日干**：{r['日干']}")
+        st.markdown(
+            f"**五行**：金{r['五行']['金']} 木{r['五行']['木']} 水{r['五行']['水']} 火{r['五行']['火']} 土{r['五行']['土']}")
 
 st.markdown("---")
 tab1, tab2, tab3, tab4 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘对比"])
