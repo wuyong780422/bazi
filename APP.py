@@ -1,6 +1,6 @@
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
-# 本地/云端通用，不修改数据库逻辑，不破坏现有功能 streamlit run APP.py
+# 本地/云端通用，不修改数据库逻辑，不破坏现有功能 运行命令>> streamlit run APP.py
 # ==========================================================
 import streamlit as st
 import sqlite3
@@ -176,9 +176,18 @@ with st.container(border=True):
         date_str = lunar_to_solar_from_db(lunar_year_input, lunar_month_input, lunar_day_input, is_leap_input)
 
     st.markdown("**出生地区**")
-    birth_area = st.selectbox("", ["北京", "未知地区（北京时间）", "上海", "广州", "深圳"], index=0, label_visibility="collapsed")
+    birth_area = st.selectbox("", ["北京", "成都", "上海", "广州", "深圳"], index=0, label_visibility="collapsed")
     true_sun_time = "1990-01-01 00:00"
     lat, lon = "北纬39.93", "东经116.42"
+
+    # 🔴 修复：手机端下拉框显示完整12时辰（含亥时）
+    st.markdown("""
+    <style>
+    /* 强制下拉菜单高度足够，显示全部时辰 */
+    div[data-baseweb="popover"] { max-height: 400px !important; }
+    div[data-baseweb="select"] ul { max-height: 380px !important; height: auto !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
     st.markdown("**出生时辰**")
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
@@ -340,7 +349,7 @@ with tab4:
                 all_elements = []
                 for data in st.session_state.duopan_list:
                     all_elements.append(data["五行"])
-                avg_wuxing = {"金": 0, "木": 0, "水": 0, "火": 0, "土": 0}
+                avg_wuxing = {"金": 0.0, "木": 0.0, "水": 0.0, "火": 0.0, "土": 0.0}
                 for k in avg_wuxing:
                     avg_wuxing[k] = sum(d[k] for d in all_elements) / len(all_elements)
                 for k in avg_wuxing:
@@ -357,8 +366,8 @@ st.markdown("""
     <div class="nav-item">📄<br>解读</div>
     <div class="nav-item">⏱️<br>吉日</div>
     <div class="nav-item">🏮<br>风水</div>
-    <div class="nav-item"><br>--</div>
-    <div class="nav-item"><br>--</div>
-    <div class="nav-item"><br>--</div>
+    <div class="nav-item"><br>..</div>
+    <div class="nav-item"><br>..</div>
+    <div class="nav-item"><br>..</div>
 </div>
 """, unsafe_allow_html=True)
