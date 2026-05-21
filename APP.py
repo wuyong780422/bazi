@@ -256,15 +256,10 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
         st.markdown(pillars_html, unsafe_allow_html=True)
 
         # 以下内容保持不变
-        st.markdown(f"**公历**：{r['公历']}")
-        st.markdown(f"**农历**：{r['农历']}")
-        col_info1, col_info2, col_info3 = st.columns(3)
-        with col_info1:
-            st.markdown(f"**生肖**：{r['生肖']}")
-        with col_info2:
-            st.markdown(f"**时辰**：{r['时辰']}")
-        with col_info3:
-            st.markdown(f"**日干**：{r['日干']}")
+        st.markdown(f"**公历**：{r['公历']}  **农历**：{r['农历']}")
+        # st.markdown(f"**农历**：{r['农历']}")
+        st.markdown(f"**生肖**：{r['生肖']}　**时辰**：{r['时辰']}　**日干**：{r['日干']}")
+        # st.markdown(f"**日干**：{r['日干']}")
         st.markdown(
             f"**五行**：金{r['五行']['金']} 木{r['五行']['木']} 水{r['五行']['水']} 火{r['五行']['火']} 土{r['五行']['土']}")
 
