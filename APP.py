@@ -198,43 +198,14 @@ with st.container(border=True):
 
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # ===================== 【终极版】原生按钮强制同行（点击必生效） =====================
-    st.markdown("""
-    <style>
-    /* 1. 强制两列永不折行，手机端也保持同一行 */
-    div[data-testid="column"] {
-        flex: 1 1 48% !important;
-        min-width: 48% !important;
-        max-width: 48% !important;
-        display: inline-block !important;
-        width: 48% !important;
-        margin: 0 1% !important;
-    }
-    /* 2. 按钮强制填满列宽，样式不变 */
-    div.stButton > button {
-        width: 100% !important;
-        height: 68px !important;
-        border-radius: 30px !important;
-        background-color: #222222 !important;
-        color: #D4AF37 !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # 原生两列按钮，不做任何隐藏/绑定，直接使用
-    col1, col2 = st.columns(2)
-    with col1:
-        btn_start = st.button("开始排盘", key="btn_start_final", use_container_width=True)
-    with col2:
-        btn_now = st.button("即时排盘", key="btn_now_final", use_container_width=True)
-
-    # 直接绑定逻辑，无任何中间层
-    if btn_start:
-        st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    if btn_now:
-        st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+    # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
+    col_btn1, col_btn2 = st.columns(2, gap="small")
+    with col_btn1:
+        if st.button("开始排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
+    with col_btn2:
+        if st.button("即时排盘", use_container_width=True):
+            st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
     with col_info:
@@ -314,8 +285,8 @@ with tab1:
         lu = solar_to_lunar_from_db(s)
         n, y, r = query_db_ganzhi(s)
         st.write(f"公历：{s}")
-        st.write(f"农历：{lu['农历完整信息']}")
-        st.write(f"生肖：{lu['生肖']}")
+        st.write(f"农历：{lu['农历完整信息']}　生肖：{lu['生肖']}")
+        # st.write(f"生肖：{lu['生肖']}")
         st.write(f"年柱：{n}　月柱：{y}　日柱：{r}")
 with tab2:
     if "bazi_result" in st.session_state and st.session_state.bazi_result:
