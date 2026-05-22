@@ -327,7 +327,7 @@ with tab2:
         # 读取顶部输入的姓名、性别
         show_name = name if name.strip() != "" else "命主"
         show_title = f"{show_name}{gender}"
-        st.markdown(f"#### 💰 {show_title} · 八字财运")
+        st.markdown(f"####    {show_title} · 八字财运")
 
         # ===================== 【传统正宗】按日主取财 =====================
         cai_wuxing = ""
@@ -372,7 +372,7 @@ with tab2:
     else:
         st.warning("请先完成排盘，再查看财运分析")
 with tab3:
-    st.markdown("#### 双人八字合盘｜专业版")
+    # st.markdown("#### 双人八字合盘")
     col_a, col_b = st.columns(2)
     with col_a:
         a_date = st.date_input("A公历生日", key="a_date")
@@ -422,7 +422,7 @@ with tab3:
         else:
             return "火" if ri_gan in "甲乙" else "土" if ri_gan in "丙丁" else "金" if ri_gan in "戊己" else "水" if ri_gan in "庚辛" else "木"
 
-    if st.button("🧮 开始专业合盘"):
+    if st.button("开始婚姻合盘"):
         a_data = BaziCalculator.generate_bazi(a_date.strftime("%Y-%m-%d"), a_shichen_name)
         b_data = BaziCalculator.generate_bazi(b_date.strftime("%Y-%m-%d"), b_shichen_name)
         a_bazi = a_data["八字"]
@@ -529,7 +529,7 @@ with tab3:
         for txt in items:
             st.markdown(f"- {txt}")
 with tab4:
-    st.markdown("#### 多盘对比｜专业群体五行分析")
+    # st.markdown("#### 多盘对比")
     if "duopan_list" not in st.session_state:
         st.session_state.duopan_list = []
 
@@ -540,11 +540,11 @@ with tab4:
                 st.session_state.duopan_list.append(st.session_state.bazi_result)
                 st.success("已添加到对比列表")
     with col_btn_clear:
-        if st.button("清空列表", use_container_width=True):
+        if st.button("清空当前列表", use_container_width=True):
             st.session_state.duopan_list = []
             st.success("已清空")
     with col_btn_compare:
-        if st.button("开始群体分析", use_container_width=True):
+        if st.button("开始多盘对比", use_container_width=True):
             if len(st.session_state.duopan_list) < 2:
                 st.warning("至少添加2个八字才能对比")
             else:
@@ -566,8 +566,10 @@ with tab4:
                 for wd in all_wuxing:
                     for k in sum_wuxing:
                         sum_wuxing[k] += wd[k]
-                        if wd[k] < min_wuxing[k]: min_wuxing[k] = wd[k]
-                        if wd[k] > max_wuxing[k]: max_wuxing[k] = wd[k]
+                        if wd[k] < min_wuxing[k]:
+                            min_wuxing[k] = wd[k]
+                        if wd[k] > max_wuxing[k]:
+                            max_wuxing[k] = wd[k]
 
                 for k in sum_wuxing:
                     avg_wuxing[k] = sum_wuxing[k] / total_count
@@ -611,7 +613,7 @@ with tab4:
                 st.markdown("---")
                 st.markdown("#### 五行详细数据")
                 for k in ["金","木","水","火","土"]:
-                    st.markdown(f"**{k}**：均值 {avg_wuxing[k]:.1f}｜范围 {min_wuxing[k]} ~ {max_wuxing[k]}")
+                    st.markdown(f"**{k}**：均值 {avg_wuxing[k]:.1f}　范围 {min_wuxing[k]} ~ {max_wuxing[k]}")
 
     # 显示已添加列表
     if st.session_state.duopan_list:
