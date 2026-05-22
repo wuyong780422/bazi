@@ -180,27 +180,6 @@ with st.container(border=True):
     true_sun_time = "1990-01-01 00:00"
     lat, lon = "北纬39.93", "东经116.42"
 
-    st.markdown("""
-    <style>
-    /* 强制下拉菜单层级最高，不被遮挡 */
-    div[data-baseweb="popover"] {
-        position: fixed !important;
-        top: auto !important;
-        bottom: auto !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 9999 !important;
-        max-height: 400px !important;
-        overflow-y: auto !important;
-    }
-    /* 强制下拉列表高度足够 */
-    div[data-baseweb="select"] ul {
-        max-height: 350px !important;
-        height: auto !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     st.markdown("**出生时辰**")
     selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
     shichen_input = selected_shichen_detail.split(" ")[0]
