@@ -202,10 +202,10 @@ with st.container(border=True):
     # 【最终版】按钮固定同一行：两列等宽框架 + 按钮自适应填满
     col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
-        if st.button("🔘 开始排盘", key="btn_start", use_container_width=True):
+        if st.button("🔘开始", key="btn_start", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
     with col_btn2:
-        if st.button("🔘 即时排盘", key="btn_now", use_container_width=True):
+        if st.button("🔘 即时", key="btn_now", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
