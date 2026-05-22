@@ -137,11 +137,6 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
 .nav-item.active {color:#9370DB;}
-/* 👇👇👇 这里是修复亥时被遮挡 👇👇👇 */
-div[data-baseweb="popover"] {
-    margin-bottom: 70px !important;
-}
-
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
@@ -186,7 +181,21 @@ with st.container(border=True):
     lat, lon = "北纬39.93", "东经116.42"
 
     st.markdown("**出生时辰**")
-    selected_shichen_detail = st.selectbox("", SHICHEN_DETAIL, index=6, label_visibility="collapsed")
+
+    # 分成两段，彻底避开 Streamlit 吞选项 bug
+    shi_group = st.radio("", ["上六时(子~巳)", "下六时(午~亥)"], horizontal=True, label_visibility="collapsed")
+
+    if shi_group == "上六时(子~巳)":
+        selected_shichen_detail = st.selectbox("", [
+            "子时 23:00-01:00", "丑时 01:00-03:00", "寅时 03:00-05:00",
+            "卯时 05:00-07:00", "辰时 07:00-09:00", "巳时 09:00-11:00"
+        ], index=0, label_visibility="collapsed")
+    else:
+        selected_shichen_detail = st.selectbox("", [
+            "午时 11:00-13:00", "未时 13:00-15:00", "申时 15:00-17:00",
+            "酉时 17:00-19:00", "戌时 19:00-21:00", "亥时 21:00-23:00"
+        ], index=5, label_visibility="collapsed")
+
     shichen_input = selected_shichen_detail.split(" ")[0]
 
     # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
