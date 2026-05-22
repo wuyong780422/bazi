@@ -181,10 +181,8 @@ with st.container(border=True):
     lat, lon = "北纬39.93", "东经116.42"
 
     st.markdown("**出生时辰**")
-
     # 分成两段，彻底避开 Streamlit 吞选项 bug
     shi_group = st.radio("", ["子-巳", "午-亥"], horizontal=True, label_visibility="collapsed")
-
     if shi_group == "子-巳":
         selected_shichen_detail = st.selectbox("", [
             "子时 23:00-01:00", "丑时 01:00-03:00", "寅时 03:00-05:00",
@@ -195,32 +193,23 @@ with st.container(border=True):
             "午时 11:00-13:00", "未时 13:00-15:00", "申时 15:00-17:00",
             "酉时 17:00-19:00", "戌时 19:00-21:00", "亥时 21:00-23:00"
         ], index=5, label_visibility="collapsed")
-
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # 强制两列永远同行（电脑+手机都不换行）
-    st.markdown("""
-    <style>
-    /* 强制按钮行两列永不折行，手机也保持一行 */
-    div.stButton > button {
-        margin:0 !important;
-    }
-    /* 锁定按钮区域为等宽两列，绝不换行 */
-    div[data-testid="column"] {
-        min-width: 48% !important;
-        flex: 1 1 48% !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # ===================== 按钮：最终同行版（永不失效） =====================
+    st.columns([1, 1, 1])[1].empty()  # 占位清空干扰
+    col1, col2 = st.columns([1, 1])  # 1:1等宽
 
-    # 一行两列框架（你要的思路）
-    col_btn1, col_btn2 = st.columns(2, gap="small")
-    with col_btn1:
-        if st.button("开始排盘", key="btn1", use_container_width=True):
+    with col1:
+        st.markdown('<div style="padding:0 2px;">', unsafe_allow_html=True)
+        if st.button("开始排盘", key="k1", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
-    with col_btn2:
-        if st.button("即时排盘", key="btn2", use_container_width=True):
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<div style="padding:0 2px;">', unsafe_allow_html=True)
+        if st.button("即时排盘", key="k2", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.get_current_bazi()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     col_info, col_save = st.columns([3, 1])
     with col_info:
