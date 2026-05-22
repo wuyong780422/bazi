@@ -280,14 +280,43 @@ st.markdown("---")
 tab1, tab2, tab3, tab4 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘对比"])
 with tab1:
     d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
+
+    # 【新增】查询完整黄历数据（五行、廿八宿、星期、十二宫辰、红砂）
+    def get_full_calendar_data(solar_date_str: str):
+        try:
+            conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT 五行, 星期, 廿八宿, 十二宫辰, 红砂 
+                FROM calendar WHERE 国历 = ? LIMIT 1
+            ''', (solar_date_str,))
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return {
+                    "五行": row[0] or "",
+                    "星期": row[1] or "",
+                    "廿八宿": row[2] or "",
+                    "十二宫辰": row[3] or "",
+                    "红砂": row[4] if row[4] and row[4].strip() else "否"
+                }
+            else:
+                return {"五行":"","星期":"","廿八宿":"","十二宫辰":"","红砂":"否"}
+        except Exception:
+            return {"五行":"","星期":"","廿八宿":"","十二宫辰":"","红砂":"否"}
+
     if st.button("查询万年历"):
         s = d.strftime("%Y-%m-%d")
         lu = solar_to_lunar_from_db(s)
         n, y, r = query_db_ganzhi(s)
-        st.write(f"公历：{s}")
-        st.write(f"农历：{lu['农历完整信息']}　生肖：{lu['生肖']}")
-        # st.write(f"生肖：{lu['生肖']}")
-        st.write(f"年柱：{n}　月柱：{y}　日柱：{r}")
+        cal = get_full_calendar_data(s)
+
+        st.write(f"📅 公历：{s}")
+        st.write(f"📅 农历：{lu['农历完整信息']}")
+        st.write(f"📅 星期：{cal['星期']}　🐉 生肖：{lu['生肖']}")
+        st.write(f"🪶 年柱：{n}　🪶 月柱：{y}　🪶 日柱：{r}")
+        st.write(f"🔥 五行：{cal['五行']}　🩸 红砂：{cal['红砂']}")
+        st.write(f"🏮 廿八宿：{cal['廿八宿']}　🏯 十二宫辰：{cal['十二宫辰']}")
 with tab2:
     if "bazi_result" in st.session_state and st.session_state.bazi_result:
         r = st.session_state.bazi_result
