@@ -137,6 +137,11 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 .footer-nav {position:fixed;bottom:0;left:0;right:0;background:#FFF;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #EEE;z-index:100;}
 .nav-item {text-align:center;font-size:12px;color:#666;}
 .nav-item.active {color:#9370DB;}
+/* 👇👇👇 这里是修复亥时被遮挡 👇👇👇 */
+div[data-baseweb="popover"] {
+    margin-bottom: 70px !important;
+}
+
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
