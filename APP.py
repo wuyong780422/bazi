@@ -183,9 +183,9 @@ with st.container(border=True):
     st.markdown("**出生时辰**")
 
     # 分成两段，彻底避开 Streamlit 吞选项 bug
-    shi_group = st.radio("", ["上六时(子~巳)", "下六时(午~亥)"], horizontal=True, label_visibility="collapsed")
+    shi_group = st.radio("", ["子-巳", "午-亥"], horizontal=True, label_visibility="collapsed")
 
-    if shi_group == "上六时(子~巳)":
+    if shi_group == "子-巳":
         selected_shichen_detail = st.selectbox("", [
             "子时 23:00-01:00", "丑时 01:00-03:00", "寅时 03:00-05:00",
             "卯时 05:00-07:00", "辰时 07:00-09:00", "巳时 09:00-11:00"
