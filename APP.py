@@ -320,13 +320,57 @@ with tab1:
 with tab2:
     if "bazi_result" in st.session_state and st.session_state.bazi_result:
         r = st.session_state.bazi_result
+        ri_gan = r["日干"]
         w = r["五行"]
-        caixing = "财星旺" if w["金"] + w["土"] > 3 else "财星弱"
-        st.markdown(f"**日干**：{r['日干']}")
-        st.markdown(f"**财运**：{caixing}")
-        st.markdown("正财：稳定收入　偏财：投资外快")
+
+        # ===================== 显示姓名 + 性别 =====================
+        # 读取顶部输入的姓名、性别
+        show_name = name if name.strip() != "" else "命主"
+        show_title = f"{show_name}{gender}"
+        st.markdown(f"#### 💰 {show_title} · 八字财运分析")
+
+        # ===================== 【传统正宗】按日主取财 =====================
+        cai_wuxing = ""
+        cai_name = ""
+        if ri_gan in ("甲", "乙"):
+            cai_wuxing = "土"
+            cai_name = "土财（木克土为财）"
+        elif ri_gan in ("丙", "丁"):
+            cai_wuxing = "金"
+            cai_name = "金财（火克金为财）"
+        elif ri_gan in ("戊", "己"):
+            cai_wuxing = "水"
+            cai_name = "水财（土克水为财）"
+        elif ri_gan in ("庚", "辛"):
+            cai_wuxing = "木"
+            cai_name = "木财（金克木为财）"
+        elif ri_gan in ("壬", "癸"):
+            cai_wuxing = "火"
+            cai_name = "火财（水克火为财）"
+
+        cai_num = w[cai_wuxing]
+
+        # 财星旺衰
+        if cai_num >= 3:
+            cai_status = "财星极旺"
+        elif cai_num == 2:
+            cai_status = "财星偏旺"
+        elif cai_num == 1:
+            cai_status = "财星偏弱"
+        else:
+            cai_status = "财星微弱"
+
+        st.markdown(f"**日主**：{ri_gan}")
+        st.markdown(f"**你的财星**：{cai_name}")
+        st.markdown(f"**财星数量**：{cai_num} 个")
+        st.markdown(f"**财运状态**：{cai_status}")
+        st.markdown("---")
+        st.markdown("""
+**正财**：固定收入、薪资、稳定所得  
+**偏财**：投资、外快、生意、意外之财  
+""")
     else:
-        st.warning("请先排盘")
+        st.warning("请先完成排盘，再查看财运分析")
 with tab3:
     st.markdown("#### 双人八字合盘")
     col_a, col_b = st.columns(2)
