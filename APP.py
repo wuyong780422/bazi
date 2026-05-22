@@ -327,7 +327,7 @@ with tab2:
         # 读取顶部输入的姓名、性别
         show_name = name if name.strip() != "" else "命主"
         show_title = f"{show_name}{gender}"
-        st.markdown(f"#### 💰 {show_title} · 八字财运分析")
+        st.markdown(f"#### 💰 {show_title} · 八字财运")
 
         # ===================== 【传统正宗】按日主取财 =====================
         cai_wuxing = ""
@@ -364,7 +364,7 @@ with tab2:
         st.markdown(f"**你的财星**：{cai_name}")
         st.markdown(f"**财星数量**：{cai_num} 个")
         st.markdown(f"**财运状态**：{cai_status}")
-        st.markdown("---")
+        # st.markdown("---")
         st.markdown("""
 **正财**：固定收入、薪资、稳定所得  
 **偏财**：投资、外快、生意、意外之财  
@@ -372,7 +372,7 @@ with tab2:
     else:
         st.warning("请先完成排盘，再查看财运分析")
 with tab3:
-    st.markdown("#### 双人八字合盘")
+    st.markdown("#### 双人八字合盘｜专业版")
     col_a, col_b = st.columns(2)
     with col_a:
         a_date = st.date_input("A公历生日", key="a_date")
@@ -382,61 +382,245 @@ with tab3:
         b_date = st.date_input("B公历生日", key="b_date")
         b_shichen = st.selectbox("B出生时辰", SHICHEN_DETAIL, key="b_shi")
         b_shichen_name = b_shichen.split(" ")[0]
-    if st.button("开始合盘"):
+
+    # --------------------------
+    # 合盘核心工具函数
+    # --------------------------
+    def get_zhi_relation(zhi1, zhi2):
+        liuhe = ["子丑","寅亥","卯戌","辰酉","巳申","午未"]
+        liuchong = ["子午","丑未","寅申","卯酉","辰戌","巳亥"]
+        liuhai = ["子未","丑午","寅巳","卯辰","申亥","酉戌"]
+        s1 = zhi1+zhi2
+        s2 = zhi2+zhi1
+        if s1 in liuhe or s2 in liuhe: return "六合"
+        if s1 in liuchong or s2 in liuchong: return "六冲"
+        if s1 in liuhai or s2 in liuhai: return "六害"
+        return "无"
+
+    def tian_gan_he(g1, g2):
+        he_list = [("甲","己"),("乙","庚"),("丙","辛"),("丁","壬"),("戊","癸")]
+        return (g1,g2) in he_list or (g2,g1) in he_list
+
+    def ri_gan_wuxing(gan):
+        if gan in "甲乙": return "木"
+        if gan in "丙丁": return "火"
+        if gan in "戊己": return "土"
+        if gan in "庚辛": return "金"
+        if gan in "壬癸": return "水"
+        return ""
+
+    def wuxing_shengke(w1, w2):
+        sheng = {"木":"火","火":"土","土":"金","金":"水","水":"木"}
+        ke = {"木":"土","土":"水","水":"火","火":"金","金":"木"}
+        if sheng[w1] == w2: return "相生"
+        if ke[w1] == w2: return "相克"
+        return "相同"
+
+    def get_spouse_star(ri_gan, gender):
+        if gender in ("先生","男"):
+            return "土" if ri_gan in "甲乙" else "金" if ri_gan in "丙丁" else "水" if ri_gan in "戊己" else "木" if ri_gan in "庚辛" else "火"
+        else:
+            return "火" if ri_gan in "甲乙" else "土" if ri_gan in "丙丁" else "金" if ri_gan in "戊己" else "水" if ri_gan in "庚辛" else "木"
+
+    if st.button("🧮 开始专业合盘"):
         a_data = BaziCalculator.generate_bazi(a_date.strftime("%Y-%m-%d"), a_shichen_name)
         b_data = BaziCalculator.generate_bazi(b_date.strftime("%Y-%m-%d"), b_shichen_name)
+        a_bazi = a_data["八字"]
+        b_bazi = b_data["八字"]
+        a_nian, a_yue, a_ri, a_shi = a_bazi
+        b_nian, b_yue, b_ri, b_shi = b_bazi
+        a_rg = a_data["日干"]
+        b_rg = b_data["日干"]
+        a_wx = a_data["五行"]
+        b_wx = b_data["五行"]
+
         score = 0
-        common_elements = 0
-        for k in ["金", "木", "水", "火", "土"]:
-            if a_data["五行"][k] > 0 and b_data["五行"][k] > 0:
-                common_elements += 1
-            if (a_data["五行"][k] > 0 and b_data["五行"][k] == 0) or (a_data["五行"][k] == 0 and b_data["五行"][k] > 0):
-                score += 10
-        score += common_elements * 5
-        if score >= 40:
-            level, desc = "上等婚配｜天生一对", "五行高度互补，气场契合度高"
-        elif score >= 30:
-            level, desc = "中等婚配｜和谐美满", "五行互补良好，相处轻松愉快"
+        items = []
+
+        # 1）生肖（年支）关系
+        zhi_rel = get_zhi_relation(a_nian[1], b_nian[1])
+        if zhi_rel == "六合":
+            score += 15
+            items.append("生肖六合｜缘分深 +15")
+        elif zhi_rel == "六冲":
+            score -= 10
+            items.append("生肖六冲｜易矛盾 -10")
+        elif zhi_rel == "六害":
+            score -= 5
+            items.append("生肖六害｜暗耗 -5")
         else:
-            level, desc = "普通婚配｜需磨合", "五行互补一般，需要多沟通理解"
+            score += 5
+            items.append("生肖平和 +5")
+
+        # 2）夫妻宫（日支）
+        fg_rel = get_zhi_relation(a_ri[1], b_ri[1])
+        if fg_rel == "六合":
+            score += 20
+            items.append("夫妻宫六合｜极佳 +20")
+        elif fg_rel == "六冲":
+            score -= 20
+            items.append("夫妻宫六冲｜不稳 -20")
+        elif fg_rel == "六害":
+            score -= 10
+            items.append("夫妻宫六害｜内耗 -10")
+        else:
+            score += 8
+            items.append("夫妻宫平和 +8")
+
+        # 3）日主天干合
+        if tian_gan_he(a_rg, b_rg):
+            score += 18
+            items.append("日主天干相合｜情投意合 +18")
+        else:
+            w1 = ri_gan_wuxing(a_rg)
+            w2 = ri_gan_wuxing(b_rg)
+            rel = wuxing_shengke(w1, w2)
+            if rel == "相生":
+                score += 12
+                items.append(f"日主相生｜滋养 +12")
+            elif rel == "相克":
+                score -= 8
+                items.append(f"日主相克｜摩擦 -8")
+            else:
+                score += 4
+                items.append("日主五行相同 +4")
+
+        # 4）五行互补
+        hubu = 0
+        for x in ["金","木","水","火","土"]:
+            if (a_wx[x]>0) != (b_wx[x]>0):
+                hubu += 1
+        score += hubu * 6
+        items.append(f"五行互补 {hubu}/5 项 +{hubu*6}")
+
+        # 5）夫妻星匹配
+        a_star = get_spouse_star(a_rg, "先生")
+        b_star = get_spouse_star(b_rg, "女士")
+        a_has = a_wx[a_star] > 0
+        b_has = b_wx[b_star] > 0
+        if a_has and b_has:
+            score += 15
+            items.append("夫妻星皆有｜婚配佳 +15")
+        else:
+            items.append("夫妻星偏弱")
+
+        # 总分区间
+        score = max(score, 0)
+        score = min(score, 100)
+        if score >= 80:
+            level = "上等婚配｜天生一对"
+            color = "#28a745"
+        elif score >= 60:
+            level = "上等婚配｜和谐美满"
+            color = "#17a2b8"
+        elif score >= 40:
+            level = "中等婚配｜可长久"
+            color = "#ffc107"
+        else:
+            level = "普通婚配｜多包容"
+            color = "#dc3545"
+
+        # 展示结果
+        st.markdown("---")
         st.markdown(f"**A方八字**：{a_data['八字_str']}")
         st.markdown(f"**B方八字**：{b_data['八字_str']}")
-        st.markdown(f"**合盘评分**：{score}/50")
-        st.markdown(f"**婚配等级**：{level}")
-        st.markdown(f"**说明**：{desc}")
+        st.markdown(f"### 合盘总分：<font color='{color}'>{score}分</font>｜{level}", unsafe_allow_html=True)
+        st.markdown("#### 评分明细")
+        for txt in items:
+            st.markdown(f"- {txt}")
 with tab4:
-    st.markdown("#### 多盘对比（支持添加多个八字）")
+    st.markdown("#### 多盘对比｜专业群体五行分析")
     if "duopan_list" not in st.session_state:
         st.session_state.duopan_list = []
+
     col_btn_add, col_btn_clear, col_btn_compare = st.columns(3)
     with col_btn_add:
-        if st.button("添加当前八字到对比列表", use_container_width=True):
+        if st.button("添加当前八字", use_container_width=True):
             if "bazi_result" in st.session_state and st.session_state.bazi_result:
                 st.session_state.duopan_list.append(st.session_state.bazi_result)
-                st.success("添加成功！")
+                st.success("已添加到对比列表")
     with col_btn_clear:
-        if st.button("清空对比列表", use_container_width=True):
+        if st.button("清空列表", use_container_width=True):
             st.session_state.duopan_list = []
-            st.success("已清空！")
+            st.success("已清空")
     with col_btn_compare:
-        if st.button("开始对比", use_container_width=True):
+        if st.button("开始群体分析", use_container_width=True):
             if len(st.session_state.duopan_list) < 2:
-                st.warning("请至少添加2个八字进行对比！")
+                st.warning("至少添加2个八字才能对比")
             else:
-                st.success("对比执行中...")
-                all_elements = []
-                for data in st.session_state.duopan_list:
-                    all_elements.append(data["五行"])
-                avg_wuxing = {"金": 0.0, "木": 0.0, "水": 0.0, "火": 0.0, "土": 0.0}
-                for k in avg_wuxing:
-                    avg_wuxing[k] = sum(d[k] for d in all_elements) / len(all_elements)
-                for k in avg_wuxing:
-                    st.markdown(f"**{k}**：平均值 {avg_wuxing[k]:.1f}，差异范围 {min(d[k] for d in all_elements)} - {max(d[k] for d in all_elements)}")
+                # =============== 专业多盘分析核心逻辑 ===============
+                all_wuxing = []
+                all_rigan = []
+                total_count = len(st.session_state.duopan_list)
+
+                for d in st.session_state.duopan_list:
+                    all_wuxing.append(d["五行"])
+                    all_rigan.append(d["日干"])
+
+                # 1. 计算五行总和、平均值
+                sum_wuxing = {"金":0,"木":0,"水":0,"火":0,"土":0}
+                avg_wuxing = {"金":0.0,"木":0.0,"水":0.0,"火":0.0,"土":0.0}
+                min_wuxing = {"金":99,"木":99,"水":99,"火":99,"土":99}
+                max_wuxing = {"金":0,"木":0,"水":0,"火":0,"土":0}
+
+                for wd in all_wuxing:
+                    for k in sum_wuxing:
+                        sum_wuxing[k] += wd[k]
+                        if wd[k] < min_wuxing[k]: min_wuxing[k] = wd[k]
+                        if wd[k] > max_wuxing[k]: max_wuxing[k] = wd[k]
+
+                for k in sum_wuxing:
+                    avg_wuxing[k] = sum_wuxing[k] / total_count
+
+                # 2. 找最旺、最弱五行
+                sorted_wuxing = sorted(avg_wuxing.items(), key=lambda x:x[1], reverse=True)
+                top1 = sorted_wuxing[0][0]
+                top2 = sorted_wuxing[1][0]
+                low1 = sorted_wuxing[-1][0]
+                low2 = sorted_wuxing[-2][0]
+
+                # 3. 群体整体判断
+                total_score = sum(sum_wuxing.values())
+                avg_per = total_score / total_count
+                if avg_per >= 7:
+                    group_type = "整体偏旺｜行动力强、易冲动"
+                elif avg_per <= 4:
+                    group_type = "整体偏弱｜温和内敛、易劳累"
+                else:
+                    group_type = "五行均衡｜稳定协调、适配性强"
+
+                # 4. 适合行业
+                industry_map = {
+                    "木":"教育、文化、创意、医疗",
+                    "火":"能源、餐饮、互联网、娱乐",
+                    "土":"地产、建筑、农业、保险",
+                    "金":"金融、法律、金属、管理",
+                    "水":"运输、贸易、传媒、旅游"
+                }
+                best_industry = industry_map.get(top1, "")
+                need_industry = industry_map.get(low1, "")
+
+                # =============== 展示结果 ===============
+                st.markdown("---")
+                st.success(f"✅ 群体分析完成｜共 {total_count} 个命盘")
+                st.markdown(f"**🏛️ 群体整体类型**：{group_type}")
+                st.markdown(f"**🔥 最旺五行**：{top1}、{top2}")
+                st.markdown(f"**💧 最弱/最缺五行**：{low1}、{low2}")
+                st.markdown(f"**📌 群体适合行业**：{best_industry}")
+                st.markdown(f"**📌 建议补充五行**：{need_industry}")
+                st.markdown("---")
+                st.markdown("#### 五行详细数据")
+                for k in ["金","木","水","火","土"]:
+                    st.markdown(f"**{k}**：均值 {avg_wuxing[k]:.1f}｜范围 {min_wuxing[k]} ~ {max_wuxing[k]}")
+
+    # 显示已添加列表
     if st.session_state.duopan_list:
+        st.markdown("---")
+        st.markdown("**已添加对比命盘**")
         for i, data in enumerate(st.session_state.duopan_list):
-            st.markdown(f"**第{i + 1}个八字**：{data['八字_str']} | {data['农历']}")
+            st.markdown(f"{i+1}｜{data['八字_str']}｜{data['农历']}")
     else:
-        st.info("请先排盘，再添加到对比列表")
+        st.info("先排盘 → 添加到对比列表 → 开始分析")
 
 st.markdown("""
 <div class="footer-nav">
