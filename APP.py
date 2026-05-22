@@ -620,7 +620,7 @@ with tab4:
         st.markdown("---")
         st.markdown("**已添加对比命盘**")
         for i, data in enumerate(st.session_state.duopan_list):
-            st.markdown(f"{i+1}｜{data['八字_str']}｜{data['农历']}")
+            st.markdown(f"{i+1}.{data['八字_str']}{data['农历']}")
     else:
         st.info("先排盘 → 添加到对比列表 → 开始分析")
 
