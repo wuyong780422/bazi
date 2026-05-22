@@ -314,7 +314,7 @@ with tab1:
         st.write(f"📅 公历：{s}")
         st.write(f"📅 农历：{lu['农历完整信息']}")
         st.write(f"📅 星期：{cal['星期']}　🐉 生肖：{lu['生肖']}")
-        st.write(f"🪶 年柱：{n} 月柱：{y} 日柱：{r}")
+        st.write(f"🪶 年柱:{n}　月柱:{y}　日柱:{r}")
         st.write(f"🔥 五行：{cal['五行']}　🩸 红砂：{cal['红砂']}")
         st.write(f"🏮 廿八宿：{cal['廿八宿']}　🏯 十二宫辰：{cal['十二宫辰']}")
 with tab2:
