@@ -198,14 +198,28 @@ with st.container(border=True):
 
     shichen_input = selected_shichen_detail.split(" ")[0]
 
-    # 按钮布局优化版：1:1等宽 + 小间距，仅作用于这两个按钮
-    # 【最终版】按钮固定同一行：两列等宽框架 + 按钮自适应填满
+    # 强制两列永远同行（电脑+手机都不换行）
+    st.markdown("""
+    <style>
+    /* 强制按钮行两列永不折行，手机也保持一行 */
+    div.stButton > button {
+        margin:0 !important;
+    }
+    /* 锁定按钮区域为等宽两列，绝不换行 */
+    div[data-testid="column"] {
+        min-width: 48% !important;
+        flex: 1 1 48% !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 一行两列框架（你要的思路）
     col_btn1, col_btn2 = st.columns(2, gap="small")
     with col_btn1:
-        if st.button("🔘开始", key="btn_start", use_container_width=True):
+        if st.button("开始排盘", key="btn1", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.generate_bazi(date_str, shichen_input)
     with col_btn2:
-        if st.button("🔘 即时", key="btn_now", use_container_width=True):
+        if st.button("即时排盘", key="btn2", use_container_width=True):
             st.session_state.bazi_result = BaziCalculator.get_current_bazi()
 
     col_info, col_save = st.columns([3, 1])
