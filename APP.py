@@ -1015,7 +1015,7 @@ if st.session_state.bottom_nav_active == "吉日":
 
 # ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
 if st.session_state.bottom_nav_active == "风水":
-    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属布局</h3></div>",
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水</h3></div>",
                 unsafe_allow_html=True)
 
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
