@@ -777,7 +777,7 @@ with tab5:
         # 这里执行排盘功能代码
         st.rerun()
 with tab6:
-    if st.button("良辰择日",use_container_width=True):
+    if st.button("开始择日",use_container_width=True):
         st.session_state.bottom_nav_active = "吉日"
         # 这里执行吉日功能代码
         st.rerun()
@@ -793,7 +793,7 @@ with tab8:
         st.rerun()
 # ===================== 独立吉日页面（终极版+修灶+财门择日·完美兼容） =====================
 if st.session_state.bottom_nav_active == "吉日":
-    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 良辰吉日·专业择日</h3></div>",
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 吉日·择时指南</h3></div>",
                 unsafe_allow_html=True)
 
     # 初始化择日八字列表（和多盘对比逻辑一致）
