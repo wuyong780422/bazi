@@ -7,7 +7,20 @@ import sqlite3
 import os
 import sys
 from datetime import datetime
-
+import requests
+import json
+# ===================== 导出Word/PDF专用依赖 =====================
+try:
+    from docx import Document
+    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+except ImportError:
+    Document = None
+try:
+    from fpdf import FPDF
+except ImportError:
+    FPDF = None
+import io
+from datetime import datetime
 # ===================== 资源路径（和APP0完全一样） =====================
 def resource_path(relative_path: str) -> str:
     try:
@@ -66,6 +79,103 @@ SHIER_BAI = ["甲辰","乙巳","丙申","丁亥","戊戌","己丑","庚辰","辛
 PENGZU_RI = {"甲":"不开仓","乙":"不栽种","丙":"不修灶","丁":"不剃头","戊":"不词讼","己":"不破土","庚":"不伐木","辛":"不祭祀","壬":"不嫁娶","癸":"不埋殡"}
 RILU_GUISHI = {"甲":"寅","乙":"卯","丙":"巳","丁":"午","戊":"巳","己":"午","庚":"申","辛":"酉","壬":"亥","癸":"子"}
 SHI_ZHI = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"]
+# ===================== 民俗风水专用常量 =====================
+SHENGXIAO_WUXING = {
+    "鼠": "水", "牛": "土", "虎": "木", "兔": "木", "龙": "土", "蛇": "火",
+    "马": "火", "羊": "土", "猴": "金", "鸡": "金", "狗": "土", "猪": "水"
+}
+YONGSHEN_FANGWEI = {"木": "东", "火": "南", "土": "中", "金": "西", "水": "北"}
+LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "土": [5, 10]}
+BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
+# ===================== 导出Word/PDF核心函数（复刻PC端完整版） =====================
+def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
+    if not Document:
+        return None
+    doc = Document()
+    title = doc.add_heading("八字命理综合测算报告", 0)
+    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    doc.add_heading("一、基础信息", level=1)
+    doc.add_paragraph(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    doc.add_paragraph(f"性别：{gender}")
+    doc.add_paragraph(f"公历：{bazi_data['公历']}")
+    doc.add_paragraph(f"农历：{bazi_data['农历']}")
+    doc.add_paragraph(f"生肖：{bazi_data['生肖']}")
+    doc.add_paragraph(f"完整八字：{bazi_data['八字_str']}")
+    doc.add_paragraph(f"日主：{bazi_data['日干']}({bazi_data['日干五行']})")
+    doc.add_heading("二、AI深度解读", level=1)
+    doc.add_paragraph(ai_content)
+    if fengshui_content:
+        doc.add_heading("三、民俗风水布局", level=1)
+        doc.add_paragraph(fengshui_content)
+    bio = io.BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    return bio
+def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
+    if not FPDF:
+        return None
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.add_font("simhei", "", resource_path("simhei.ttf"), uni=True)
+    pdf.set_font("simhei", size=18)
+    pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
+    pdf.ln(8)
+    pdf.set_font("simhei", size=14)
+    pdf.cell(0, 12, "一、基础信息", ln=True)
+    pdf.ln(5)
+    pdf.set_font("simhei", size=12)
+    pdf.cell(0, 10, f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
+    pdf.cell(0, 10, f"性别：{gender}", ln=True)
+    pdf.cell(0, 10, f"公历：{bazi_data['公历']}", ln=True)
+    pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
+    pdf.cell(0, 10, f"生肖：{bazi_data['生肖']}", ln=True)
+    pdf.cell(0, 10, f"八字：{bazi_data['八字_str']}", ln=True)
+    pdf.cell(0, 10, f"日主：{bazi_data['日干']}({bazi_data['日干五行']})", ln=True)
+    pdf.ln(8)
+    pdf.set_font("simhei", size=14)
+    pdf.cell(0, 12, "二、AI深度解读", ln=True)
+    pdf.ln(5)
+    pdf.set_font("simhei", size=12)
+    pdf.multi_cell(0, 10, ai_content)
+    if fengshui_content:
+        pdf.ln(8)
+        pdf.set_font("simhei", size=14)
+        pdf.cell(0, 12, "三、民俗风水布局", ln=True)
+        pdf.ln(5)
+        pdf.set_font("simhei", size=12)
+        pdf.multi_cell(0, 10, fengshui_content)
+    bio = io.BytesIO()
+    pdf.output(bio)
+    bio.seek(0)
+    return bio
+# ===================== 天干五行辅助函数（补回bazi_result['日干五行']专用） =====================
+def get_gan_wuxing(gan: str) -> str:
+    """
+    根据天干返回传统命理中的五行属性
+    规则：甲乙属木，丙丁属火，戊己属土，庚辛属金，壬癸属水
+    """
+    if gan in ["甲", "乙"]:
+        return "木"
+    elif gan in ["丙", "丁"]:
+        return "火"
+    elif gan in ["戊", "己"]:
+        return "土"
+    elif gan in ["庚", "辛"]:
+        return "金"
+    elif gan in ["壬", "癸"]:
+        return "水"
+    else:
+        return ""
+# ===================== AI解读专用配置（和PC端完全一致） =====================
+DEEPSEEK_CONFIG = {
+    "api_key": "sk-d3b976c41272460eab55726001606b15",
+    "api_url": "https://api.deepseek.com/v1/chat/completions",
+    "model": "deepseek-chat",
+    "timeout": 70,
+    "temperature": 0.7,
+    "max_tokens": 2800
+}
+
 # ===================== 数据库函数（100% 复制 APP0 正确版） =====================
 def query_db_ganzhi(solar_date_str: str) -> tuple[str, str, str]:
     try:
@@ -130,8 +240,12 @@ class BaziCalculator:
         return {
             "公历": target_date, "农历": lunar["农历完整信息"], "生肖": lunar["生肖"],
             "时辰": shichen, "八字": [nian, yue, ri, shi], "八字_str": f"{nian} {yue} {ri} {shi}",
-            "日干": ri_gan, "五行": wuxing,
-            "纳音": [NAYIN_TABLE.get(nian, ""), NAYIN_TABLE.get(yue, ""), NAYIN_TABLE.get(ri, ""), NAYIN_TABLE.get(shi, "")]
+            "日干": ri_gan,
+            # 👇 【唯一新增：补全日干五行，和电脑版完全一致】
+            "日干五行": get_gan_wuxing(ri_gan),
+            "五行": wuxing,
+            "纳音": [NAYIN_TABLE.get(nian, ""), NAYIN_TABLE.get(yue, ""), NAYIN_TABLE.get(ri, ""),
+                     NAYIN_TABLE.get(shi, "")]
         }
 
     @staticmethod
@@ -182,6 +296,8 @@ with st.container(border=True):
     with col_gender:
         st.markdown("**性别**")
         gender = st.radio("", ["先生", "女士"], horizontal=True, label_visibility="collapsed")
+        # 👇 修复核心：把性别存入session_state，风水页面才能读到
+        st.session_state.gender = gender
     with col_cal:
         st.markdown("**历法**")
         calendar_type = st.radio("", ["公历", "农历"], horizontal=True, label_visibility="collapsed")
@@ -671,13 +787,13 @@ with tab7:
         # 这里执行风水功能代码
         st.rerun()
 with tab8:
-    if st.button("AI..解读",use_container_width=True):
+    if st.button("deepseek 八 字 解 读",use_container_width=True):
         st.session_state.bottom_nav_active = "解读"
         # 这里执行解读功能代码
         st.rerun()
 # ===================== 独立吉日页面（终极版+修灶+财门择日·完美兼容） =====================
 if st.session_state.bottom_nav_active == "吉日":
-    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 吉日·专业择日</h3></div>",
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 良辰吉日·专业择日</h3></div>",
                 unsafe_allow_html=True)
 
     # 初始化择日八字列表（和多盘对比逻辑一致）
@@ -896,6 +1012,166 @@ if st.session_state.bottom_nav_active == "吉日":
                                 unsafe_allow_html=True)
                     for s in safe[:6]:
                         st.markdown(f"<div style='text-align:center;'>{s}</div>", unsafe_allow_html=True)
+
+# ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
+if st.session_state.bottom_nav_active == "风水":
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属布局</h3></div>",
+                unsafe_allow_html=True)
+
+    if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
+        st.warning("⚠️ 请先在排盘页完成排盘，再查看专属风水")
+    else:
+        r = st.session_state.bazi_result
+        gender = st.session_state.get("gender", "先生")
+        shengxiao = r["生肖"]
+        ri_gan = r["日干"]
+        bazi_str = r["八字_str"]
+
+
+        # ============== 原版PC风水核心计算逻辑（100%复刻） ==============
+        def get_fengshui_advice():
+            try:
+                # 1. 生肖五行
+                wx = SHENGXIAO_WUXING.get(shengxiao, "土")
+                # 2. 八宅命卦：男坎女坤（商用简化正统版）
+                is_male = gender == "先生"
+                minggua = "坎" if is_male else "坤"
+                zhai_type = "东四宅" if minggua in ["坎", "离", "震", "巽"] else "西四宅"
+                # 3. 吉方位
+                caifeng = YONGSHEN_FANGWEI.get(wx, "北方")
+                shiye = caifeng
+                wenchang = "东南"
+                taohua = "南方" if wx in ["木", "火"] else "西方"
+                # 4. 吉利楼层
+                he_lou = LOU_CENG_WUXING.get(wx, [1, 6])
+                # 5. 幸运色
+                se = {"木": "青绿", "火": "红紫", "土": "黄棕", "金": "白金", "水": "蓝黑"}[wx]
+                # 6. 输出文本
+                text = f"【一、命卦与宅卦】\n"
+                text += f"卦象：{minggua}卦｜{'东四命' if zhai_type == '东四宅' else '西四命'}\n"
+                text += f"适合住宅：{zhai_type}\n\n"
+                text += f"【二、专属吉方位】\n"
+                text += f"求财吉位：{caifeng}｜事业吉位：{shiye}\n"
+                text += f"文昌吉位：{wenchang}｜桃花吉位：{taohua}\n\n"
+                text += f"【三、八大方位吉凶】\n"
+                j = BAZHAI_JIXIONG[:4]
+                x = BAZHAI_JIXIONG[4:]
+                text += "吉位：" + "｜".join(j) + "\n"
+                text += "凶位：" + "｜".join(x) + "\n\n"
+                text += f"【四、最佳朝向】\n"
+                text += f"大门宜朝：{caifeng}｜床头宜朝：{shiye}\n"
+                text += f"书桌宜朝：{wenchang}\n\n"
+                text += f"【五、吉利楼层(尾数)】\n"
+                text += f"适合：{','.join(map(str, he_lou))} 尾号\n\n"
+                text += f"【六、居家布局建议】\n"
+                text += f"• 主卧宜静不宜冲\n• 书房文昌位利学业事业\n• 客厅明亮财位整洁\n• 厨房忌对卧室门\n• 卫生间不宜居中\n\n"
+                text += f"【七、喜用色彩】\n"
+                text += f"幸运色：{se}｜喜用五行：{wx}\n\n"
+                text += "🧭 以上为传统文化民俗参考，仅供生活布局使用。"
+                return text
+            except Exception as e:
+                return f"⚠️ 风水生成异常：{str(e)}"
+
+
+        # ============== 显示风水结果 ==============
+        fengshui_txt = get_fengshui_advice()
+        st.markdown("---")
+        st.success(f"✅ {gender}｜{shengxiao}｜{bazi_str} 专属风水")
+        st.markdown(fengshui_txt)
+
+# ===================== 最终版AI解读+导出Word/PDF =====================
+if st.session_state.bottom_nav_active == "解读":
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🤖 AI深度命理解读</h3></div>", unsafe_allow_html=True)
+    if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
+        st.warning("⚠️ 请先在排盘页完成排盘，再使用AI解读")
+    else:
+        bazi_data = st.session_state.bazi_result
+        gender = st.session_state.get("gender", "先生")
+        fengshui_txt = ""
+        if st.session_state.get("bottom_nav_active") == "风水":
+            fengshui_txt = st.session_state.get("fengshui_result", "")
+        if st.button("🚀 开始深度解读", use_container_width=True):
+            with st.spinner("🤖 AI正在深度分析中...\n⏳ 预计5-15秒，请不要重复点击"):
+                try:
+                    prompt = f"""你是专业子平八字命理师，按以下结构生成**专业版报告**，严格输出，不要客套话：
+【一、命局本质】
+八字：{bazi_data['八字_str']}，性别{gender}，日主{bazi_data['日干']}({bazi_data['日干五行']})，
+生肖：{bazi_data['生肖']}，五行统计：{bazi_data['五行']}
+用生活化比喻总结命局。
+【二、寿缘与关键风险年份】
+1. 寿缘参考（命理推导，非绝对）:结合八字五行平衡、用神力量、大运走势，推算并明确给出最长寿缘期望参考值（必须是具体年龄范围，如88-95岁）
+2. 5个关键风险年份：最近的关键风险年份
+3. 每一年注意事项
+【三、事业细分】
+结合时代判断学历层次、适合行业、岗位、晋升年份
+涉及具体的年份要备注（如丙午年（2026）
+【四、财运细分】
+财富如何、正财偏财、求财方位、风险年份
+涉及具体的年份要备注（如丙午年（2026）
+【五、婚姻家庭】
+配偶情况、相处模式、助力来源、风险年份、预判生儿生女、子女学历、子女职业、子女未来成就如何
+涉及具体的年份要备注（如丙午年（2026）
+【六、健康细分】
+重点养护部位、体检方向
+【七、关键节点行动】
+凶年：守成、不投资、不跳槽、不远行、一些重大事件(故)何时发生
+吉年：主动拓展、合作、考证、一生中有哪些大事件发生
+涉及具体的年份要备注（如丙午年（2026）
+【八、风水与化解】
+吉方位、吉颜色、饰品、布局建议
+要求：语言专业、简练、命理师风格，不要符号,禁止出现任何星号（*）和井号（#）、不要标题格式,所有内容基于八字核心数据（空亡、地支互动、用忌神等），不空谈。
+"""
+                    import requests, json
+                    DEEPSEEK_CONFIG = {
+                        "api_key": "sk-d3b976c41272460eab55726001606b15",
+                        "api_url": "https://api.deepseek.com/v1/chat/completions",
+                        "model": "deepseek-chat",
+                        "timeout": 70,
+                        "temperature": 0.7,
+                        "max_tokens": 2800
+                    }
+                    headers = {"Content-Type": "application/json","Authorization": f"Bearer {DEEPSEEK_CONFIG['api_key']}"}
+                    payload = {"model": DEEPSEEK_CONFIG["model"],"messages": [{"role": "user", "content": prompt}],"temperature": 0.7,"max_tokens": 2800}
+                    response = requests.post(DEEPSEEK_CONFIG["api_url"], headers=headers, json=payload, timeout=70)
+                    response.raise_for_status()
+                    ai_result = response.json()["choices"][0]["message"]["content"].strip()
+                    st.session_state.ai_result = ai_result
+                    st.markdown("---")
+                    st.success("✅ AI深度解读完成")
+                    st.markdown(ai_result)
+                except Exception as e:
+                    st.error(f"❌ 解读失败：{str(e)}")
+        # ===================== 导出按钮：解读完成后显示 =====================
+        if "ai_result" in st.session_state and st.session_state.ai_result:
+            st.markdown("---")
+            st.markdown("#### 📄 导出报告")
+            col1, col2 = st.columns(2)
+            with col1:
+                word_file = generate_word_doc(bazi_data, gender, st.session_state.ai_result)
+                if word_file:
+                    st.download_button(
+                        label="📄 导出Word",
+                        data=word_file,
+                        file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+                else:
+                    st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
+            with col2:
+                pdf_file = generate_pdf_doc(bazi_data, gender, st.session_state.ai_result)
+                if pdf_file:
+                    st.download_button(
+                        label="📄 导出PDF",
+                        data=pdf_file,
+                        file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                else:
+                    st.button("📄 导出PDF（未安装库）", disabled=True, use_container_width=True)
+
+
 # ========= 【底部固定悬浮导航栏】只负责跟随状态变色，纯视觉层 =========
 st.markdown("<div style='height:90px;'></div>",unsafe_allow_html=True)
 act = st.session_state.bottom_nav_active
