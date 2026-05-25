@@ -792,7 +792,7 @@ with tab8:
         st.session_state.bottom_nav_active = "解读"
         # 这里执行解读功能代码
         st.rerun()
-# ===================== 吉日模块（100%对齐电脑版·正统择日逻辑） =====================
+# ===================== 吉日模块（最终对齐电脑版·太阳星规则修正） =====================
 if st.session_state.bottom_nav_active == "吉日":
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 吉日·择时指南</h3></div>", unsafe_allow_html=True)
     if "jiri_list" not in st.session_state:
@@ -894,21 +894,8 @@ if st.session_state.bottom_nav_active == "吉日":
                     if t in ["财门择日"]: return zhi in ["寅","申","巳","亥","子","午","卯","酉"]
                     return True
 
-                # 3. 核心修正：太阳星日规则（恢复电脑版逐月递推规则）
-                sun_star_days = {
-                    1: [1, 15],   # 正月：初一、十五
-                    2: [2, 16],   # 二月：初二、十六
-                    3: [3, 17],   # 三月：初三、十七
-                    4: [4, 18],   # 四月：初四、十八
-                    5: [5, 19],   # 五月：初五、十九
-                    6: [6, 20],   # 六月：初六、二十
-                    7: [7, 21],   # 七月：初七、廿一
-                    8: [8, 22],   # 八月：初八、廿二
-                    9: [9, 23],   # 九月：初九、廿三
-                    10: [10, 24], # 十月：初十、廿四
-                    11: [11, 25], # 十一月：十一、廿五
-                    12: [12, 26]  # 腊月：十二、廿六
-                }
+                # 3. 核心修正：太阳星日规则（恢复电脑版正统：所有月份的农历初一、十五）
+                sun_star_days = {month: [1, 15] for month in range(1, 13)}
 
                 # 太阳吉时（和电脑版规则完全一致）
                 def get_sun_good_time(day_zhi):
