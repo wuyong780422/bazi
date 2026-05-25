@@ -792,7 +792,7 @@ with tab8:
         st.session_state.bottom_nav_active = "解读"
         # 这里执行解读功能代码
         st.rerun()
-# ===================== 吉日模块（调试版：先出数据，再对齐电脑版） =====================
+# ===================== 吉日模块（终极对齐电脑版·太阳星+黄道双修正） =====================
 if st.session_state.bottom_nav_active == "吉日":
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 吉日·择时指南</h3></div>", unsafe_allow_html=True)
     if "jiri_list" not in st.session_state:
@@ -861,16 +861,17 @@ if st.session_state.bottom_nav_active == "吉日":
                 SHI_ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
                 PENGZU_RI = {"甲":"不开仓","乙":"不栽植","丙":"不修灶","丁":"不剃头","戊":"不受田","己":"不破券","庚":"不安床","辛":"不合酱","壬":"不祷神","癸":"不诉讼"}
 
-                # 1. 农历月兼容处理（同时支持文本和数字）
+                # 1. 修正：农历月文本转数字（适配你的数据库格式）
                 lunar_month_map = {
                     "正月": 1, "二月": 2, "三月": 3, "四月": 4, "五月": 5, "六月": 6,
                     "七月": 7, "八月": 8, "九月": 9, "十月": 10, "十一月": 11, "腊月": 12,
                     "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, "10":10, "11":11, "12":12
                 }
 
-                # 2. 黄道吉日判断（放宽条件，先出数据）
-                def get_huangdao_by_jianxing(jx):
-                    return jx in ["成", "开", "执", "定", "除", "危", "平", "满"]
+                # 2. 修正：黄道吉日判断（按日支十二神，和电脑版完全一致）
+                def get_huangdao_by_dizhi(zhi):
+                    hd = {"子":"青龙","丑":"明堂","寅":"天刑","卯":"朱雀","辰":"金匮","巳":"天德","午":"白虎","未":"玉堂","申":"天牢","酉":"玄武","戌":"司命","亥":"勾陈"}
+                    return hd.get(zhi) in ["青龙","明堂","金匮","天德","玉堂","司命"]
 
                 def get_jianxing(yue_zhi, day_zhi):
                     jx_list = ["建","除","满","平","定","执","破","危","成","收","开","闭"]
@@ -890,10 +891,9 @@ if st.session_state.bottom_nav_active == "吉日":
                     if t in ["财门择日"]: return zhi in ["寅","申","巳","亥","子","午","卯","酉"]
                     return True
 
-                sun_star_days = {
-                    1: [1, 15], 2: [2, 16], 3: [3, 17], 4: [4, 18], 5: [5, 19], 6: [6, 20],
-                    7: [7, 21], 8: [8, 22], 9: [9, 23], 10: [10, 24], 11: [11, 25], 12: [12, 26]
-                }
+                # 3. 修正：太阳星日规则（每月初一/十五，和电脑版完全一致）
+                sun_star_days = {month: [1, 15] for month in range(1, 13)}
+
                 def get_sun_good_time(day_zhi):
                     if day_zhi in ["巳", "午"]: return "辰时"
                     elif day_zhi in ["申", "酉"]: return "申时"
@@ -904,83 +904,58 @@ if st.session_state.bottom_nav_active == "吉日":
                 conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                 cursor = conn.cursor()
 
-                # 调试：先打印字段信息
-                st.info("🔍 正在读取数据库字段，请稍候...")
                 cursor.execute("PRAGMA table_info(calendar)")
-                columns = cursor.fetchall()
-                st.write("数据库表字段：", [col[1] for col in columns])
+                columns = [col[1] for col in cursor.fetchall()]
 
                 for i in range(1, 1826):
                     dt = today + timedelta(days=i)
                     date_str = dt.strftime("%Y-%m-%d")
                     m, d = dt.month, dt.day
 
-                    # 读取所有字段，兼容不同列名
                     cursor.execute("SELECT * FROM calendar WHERE 国历 = ? LIMIT 1", (date_str,))
                     res = cursor.fetchone()
-                    if not res:
-                        continue
+                    if not res: continue
 
-                    # 动态获取字段（根据表结构）
-                    res_dict = dict(zip([col[1] for col in columns], res))
+                    res_dict = dict(zip(columns, res))
                     红砂值 = res_dict.get("红砂", "")
                     lunar_day = res_dict.get("农历日", 0)
-                    lunar_month_text = res_dict.get("农历月", "") or res_dict.get("月份", "") or ""
+                    lunar_month_text = res_dict.get("农历月", "")
                     day_gz = res_dict.get("纳音", "")
 
-                    # 脏数据过滤（放宽条件）
-                    if not day_gz or len(day_gz) != 2:
-                        continue
+                    if not day_gz or len(day_gz) != 2: continue
                     day_gan = day_gz[0]
                     day_zhi = day_gz[1]
-                    if day_gan not in list(PENGZU_RI.keys()):
-                        continue
-                    if day_zhi not in SHI_ZHI:
-                        continue
-                    if not isinstance(lunar_day, int) or not (1 <= lunar_day <= 30):
-                        continue
+                    if day_gan not in list(PENGZU_RI.keys()): continue
+                    if day_zhi not in SHI_ZHI: continue
+                    if not isinstance(lunar_day, int) or not (1 <= lunar_day <= 30): continue
 
-                    # 农历月兼容处理
                     lunar_month = lunar_month_map.get(str(lunar_month_text).strip(), None)
                     if not lunar_month:
-                        # 尝试直接转数字
                         try:
                             lunar_month = int(lunar_month_text)
                             if not (1 <= lunar_month <= 12):
                                 lunar_month = None
                         except:
                             lunar_month = None
-                    if not lunar_month:
-                        continue
+                    if not lunar_month: continue
 
-                    # 基础凶煞过滤（只过滤红砂和破日，先出数据）
-                    if 红砂值 == "红砂":
-                        continue
+                    if 红砂值 == "红砂": continue
                     jx = get_jianxing(yue_zhi, day_zhi)
-                    if jx == "破" or jx == "无效":
-                        continue
+                    if jx == "破" or jx == "无效": continue
+                    if day_zhi == chong_sx or day_zhi == chong_rz: continue
+                    if not match_type(day_zhi, jiri_type): continue
 
-                    # 冲煞过滤（放宽条件，先不判断）
-                    # if day_zhi == chong_sx or day_zhi == chong_rz: continue
-
-                    # 事项匹配（放宽条件，先不判断）
-                    # if not match_type(day_zhi, jiri_type): continue
-
-                    # 黄道吉日判断（放宽条件）
-                    is_huangdao = get_huangdao_by_jianxing(jx)
+                    is_huangdao = get_huangdao_by_dizhi(day_zhi)
                     is_sun_star = lunar_day in sun_star_days.get(lunar_month, [])
 
-                    # 彭祖百忌处理
                     peng_txt = PENGZU_RI.get(day_gan, "")
                     if jiri_type == "修灶择日" and peng_txt == "不修灶":
                         peng_txt = ""
 
-                    # 格式拼接
                     base_txt = f"{dt.year}-{m:02d}-{d:02d}({day_gz})【{jx}】"
                     if peng_txt:
                         base_txt += f"({peng_txt})"
 
-                    # 分类存储（先全部存到安全吉日，确保有数据）
                     if is_sun_star and is_huangdao:
                         sun_time = get_sun_good_time(day_zhi)
                         sun_best.append(f"{base_txt} ★吉 ★太阳吉时：{sun_time}")
@@ -993,7 +968,6 @@ if st.session_state.bottom_nav_active == "吉日":
 
                 st.markdown("---")
                 st.success(f"✅ {jiri_type} · 筛选完成")
-                st.write(f"🔍 调试信息：首选吉日{len(sun_best)}条，完美吉日{len(perfect)}条，安全吉日{len(safe)}条")
 
                 if sun_best:
                     st.markdown("<div style='text-align:center;color:#D4AF37;font-weight:bold;'>☀️ 【首选】太阳星+吉神吉日（最吉·最灵）</div>", unsafe_allow_html=True)
