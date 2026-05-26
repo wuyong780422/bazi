@@ -790,7 +790,7 @@ with tab8:
         st.session_state.bottom_nav_active = "解读"
         # 这里执行解读功能代码
         st.rerun()
-# ===================== 【100%对齐main+调试日志】吉日模块 =====================
+# ===================== 【100%复刻main.py·不碰tab6·零报错】吉日模块 =====================
 if st.session_state.get("bottom_nav_active", "") == "吉日":
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>📅 吉日·择时指南</h3></div>",
                 unsafe_allow_html=True)
@@ -798,10 +798,6 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
         st.warning("⚠️ 请先在排盘页完成排盘，再查询吉日")
     else:
         r = st.session_state.bazi_result
-        # 打印排盘信息（调试用）
-        st.write("[调试] 你的八字：", r["八字"])
-        st.write("[调试] 日柱地支：", r["八字"][2][1], " 生肖：", r["生肖"])
-
         jiri_type = st.radio(
             " ",
             ["开业择日", "嫁娶择日", "入宅择日", "出行择日", "祈福择日",
@@ -811,7 +807,7 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
         )
         if st.button("🔍 查询5年内顶级吉日", use_container_width=True):
             with st.spinner("正在筛选顶级吉日..."):
-                # ===================== main.py原版常量 =====================
+                # ===================== main.py原版常量 一字不差 =====================
                 chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥", "午": "子",
                              "未": "丑", "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
                 sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳", "马": "午",
@@ -820,7 +816,7 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
                 sanniang = [3, 7, 13, 18, 22, 27]
 
 
-                # ===================== main.py原版函数 =====================
+                # ===================== main.py原版函数 一字不差 =====================
                 def get_huangdao(zhi):
                     hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德",
                           "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
@@ -844,80 +840,57 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
                     return True
 
 
-                # ===================== main.py原版冲煞参数 =====================
+                # ===================== main.py原版冲煞规则（只冲生肖+日支） =====================
                 ri_zhi = r["八字"][2][1]
                 shengxiao = r["生肖"]
                 sx_zhi = sx_map.get(shengxiao, "")
                 chong_sx = chong_map.get(sx_zhi, "")
                 chong_rz = chong_map.get(ri_zhi, "")
 
-                st.write(f"[调试] 冲生肖：{chong_sx} | 冲日柱：{chong_rz}")
-
                 today = datetime.now()
                 sun_best, perfect = [], []
                 conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                 cursor = conn.cursor()
 
-                # 只查前10天调试，防止卡死
-                for i in range(1, 10):
+                # ===================== main.py原版5年查询（1826天） =====================
+                for i in range(1, 1826):
                     dt = today + timedelta(days=i)
                     date_str = dt.strftime("%Y-%m-%d")
                     m, d = dt.month, dt.day
 
-                    # ===================== main.py原版查询 =====================
+                    # main.py原版数据库查询
                     cursor.execute("SELECT 红砂,农历日,纳音,年 FROM calendar WHERE 国历 = ? LIMIT 1", (date_str,))
                     res = cursor.fetchone()
-                    if not res:
-                        st.write(f"❌ {date_str}：无数据库记录")
-                        continue
+                    if not res: continue
                     红砂值, lunar_day, day_gz, first_gz = res
 
                     # 红砂过滤
-                    if str(红砂值).strip() == "红砂":
-                        st.write(f"❌ {date_str}：红砂日")
-                        continue
+                    if str(红砂值).strip() == "红砂": continue
 
-                    # 日干支
-                    if len(day_gz) != 2:
-                        st.write(f"❌ {date_str}：日干支格式错误")
-                        continue
+                    # 日干支校验
+                    if len(day_gz) != 2: continue
                     day_zhi = day_gz[1]
 
-                    # 冲煞过滤
-                    if day_zhi == chong_sx or day_zhi == chong_rz:
-                        st.write(f"❌ {date_str}：冲煞({day_zhi})")
-                        continue
+                    # 冲煞过滤（和main完全一致）
+                    if day_zhi == chong_sx or day_zhi == chong_rz: continue
 
-                    # 神煞过滤
-                    if (m, d) in sili_jue:
-                        st.write(f"❌ {date_str}：四离四绝")
-                        continue
-                    if d in sanniang:
-                        st.write(f"❌ {date_str}：三娘煞")
-                        continue
-                    if is_yue_po(m, day_zhi):
-                        st.write(f"❌ {date_str}：月破日")
-                        continue
+                    # 神煞过滤（和main完全一致）
+                    if (m, d) in sili_jue or d in sanniang or is_yue_po(m, day_zhi): continue
 
-                    # 黄道过滤
-                    if not get_huangdao(day_zhi):
-                        st.write(f"❌ {date_str}：非黄道日({day_zhi})")
-                        continue
+                    # 大黄道判断（main原版，不是建星！）
+                    if not get_huangdao(day_zhi): continue
 
-                    # 事项匹配
-                    if not match_type(day_zhi, jiri_type):
-                        st.write(f"❌ {date_str}：不匹配{jiri_type}({day_zhi})")
-                        continue
+                    # 事项匹配（main原版）
+                    if not match_type(day_zhi, jiri_type): continue
 
-                    # 太阳星
+                    # 太阳星判断（调用顶部常量，和main一致）
                     is_sun_day, sun_time = False, ""
                     if first_gz in sun_star_table:
                         sun_days, sun_time = sun_star_table[first_gz]
                         if lunar_day in sun_days:
                             is_sun_day = True
 
-                    # 符合条件
-                    st.write(f"✅ {date_str}：符合条件！")
+                    # 结果拼接（和main完全一致）
                     base = f"{date_str}({day_gz})"
                     if is_sun_day:
                         sun_best.append(f"{base} ★吉 ★太阳吉时：{sun_time}")
@@ -926,7 +899,7 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
 
                 conn.close()
 
-                # ===================== 输出结果 =====================
+                # ===================== 输出格式（和main完全一致） =====================
                 st.markdown("---")
                 st.success(f"✅ {jiri_type} · 筛选完成")
                 if sun_best:
@@ -939,7 +912,7 @@ if st.session_state.get("bottom_nav_active", "") == "吉日":
                                 unsafe_allow_html=True)
                     for s in perfect[:5]: st.write(s)
                 if not sun_best and not perfect:
-                    st.error("❌ 无符合条件吉日，看上面调试信息！")
+                    st.info("未找到符合条件的吉日")
 
 # ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
 if st.session_state.bottom_nav_active == "风水":
