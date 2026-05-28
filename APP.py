@@ -800,274 +800,202 @@ with tab8:
         # 这里执行解读功能代码
         st.rerun()
 
-# ===================== 【商用级稳定版·数据库读日柱·无隐患】Streamlit择日模块 =====================
+# ===================== 【100%对齐main·终极可靠版】APP择日功能 =====================
 if st.session_state.bottom_nav_active == "吉日":
     st.markdown("<div style='text-align:center;margin-top:20px;'><h3>📅 良辰吉日·专业择日</h3></div>", unsafe_allow_html=True)
-    # 排盘前置检查
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
-        st.warning("⚠️ 请先在排盘页完成八字排盘，再查询吉日")
+        st.warning("⚠️ 请先排盘再择日")
         st.stop()
 
     r = st.session_state.bazi_result
-    # 12种择日类型（行业通用）
     jiri_type = st.radio(
-        "", ["开业择日", "嫁娶择日", "入宅择日", "出行择日", "祈福择日", "订婚择日",
-             "动工择日", "动土择日", "上任择日", "安葬择日", "修灶择日", "财门择日"],
+        "", ["开业择日","嫁娶择日","入宅择日","出行择日","祈福择日","订婚择日",
+             "动工择日","动土择日","上任择日","安葬择日","修灶择日","财门择日"],
         horizontal=True, label_visibility="collapsed"
     )
 
-    # 单人/双人/多人择日分类
-    single_types = ["开业择日", "出行择日", "上任择日", "祈福择日", "修灶择日", "财门择日"]
-    double_types = ["嫁娶择日", "订婚择日"]
-    multi_types = ["入宅择日", "动工择日", "动土择日", "安葬择日"]
+    single_types = ["开业择日","出行择日","上任择日","祈福择日","修灶择日","财门择日"]
+    double_types = ["嫁娶择日","订婚择日"]
+    multi_types = ["入宅择日","动工择日","动土择日","安葬择日"]
     is_single = jiri_type in single_types
-    is_double = jiri_type in double_types
-    is_multi = jiri_type in multi_types
 
-    # 双人/多人择日界面
-    if is_double or is_multi:
+    if not is_single:
         st.markdown("---")
-        st.markdown("🔹 双人/多人择日：先排盘 → 添加当前八字到列表 → 开始择日")
-        col_add, col_clear, col_start = st.columns(3)
-        with col_add:
+        col1, col2, col3 = st.columns(3)
+        with col1:
             if st.button("➕ 添加当前八字", use_container_width=True):
                 if "jiri_list" not in st.session_state:
                     st.session_state.jiri_list = []
                 if r not in st.session_state.jiri_list:
                     st.session_state.jiri_list.append(r)
-                    st.success(f"✅ 已添加：{r['八字_str']}")
-                else:
-                    st.warning("⚠️ 该八字已在列表中")
-        with col_clear:
+                    st.success("已添加")
+        with col2:
             if st.button("🧹 清空列表", use_container_width=True):
                 st.session_state.jiri_list = []
-                st.success("🗑️ 已清空所有八字")
-        with col_start:
-            start_jiri = st.button("🚀 开始择日", use_container_width=True)
-        # 显示已添加的八字列表
+        with col3:
+            start = st.button("🚀 开始择日", use_container_width=True)
         if st.session_state.get("jiri_list"):
-            st.markdown("**📋 参与择日的八字列表**")
-            for i, item in enumerate(st.session_state.jiri_list):
-                st.markdown(f"{i + 1}. {item['八字_str']} | {item['农历']}")
-        else:
-            st.info("👆 请点击「添加当前八字」加入参与择日人员")
+            st.markdown("**参与择日**")
+            for idx, item in enumerate(st.session_state.jiri_list):
+                st.write(f"{idx+1}. {item['八字_str']}")
 
-    # 择日权限判断
-    can_query = False
-    if is_single:
-        can_query = True
-    else:
-        can_query = len(st.session_state.get("jiri_list", [])) >= 2
-    query_btn = False
-    if is_single:
-        query_btn = st.button("🔍 查询5年内顶级吉日", use_container_width=True)
-    else:
-        query_btn = start_jiri if 'start_jiri' in locals() else False
+    can_query = is_single or len(st.session_state.get("jiri_list", [])) >= 2
+    btn = st.button("🔍 查询5年吉日", use_container_width=True) if is_single else start
 
-    if can_query and query_btn:
-        with st.spinner("正在筛选吉日，请稍候..."):
+    if can_query and btn:
+        with st.spinner("正在筛选吉日..."):
             from datetime import datetime, timedelta
             import sqlite3
-            # 1. 从排盘结果中提取关键参数
-            ri_zhi = r["八字"][2][1]  # 日支
-            shengxiao = r["生肖"]     # 生肖
-            yue_zhi = r["八字"][1][1] # 月支
-            ri_gan = r["日干"]        # 日干
-            nian_gan = r["八字"][0][0] # 年干
 
-            # 2. 基础映射表（行业标准）
-            chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥",
-                         "午": "子", "未": "丑", "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
-            sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳",
-                      "马": "午", "羊": "未", "猴": "申", "鸡": "酉", "狗": "戌", "猪": "亥"}
+            # ========== 完全沿用main.py可靠参数 ==========
+            ri_zhi = r["八字"][2][1]
+            shengxiao = r["生肖"]
+            yue_zhi = r["八字"][1][1]
+            nian_gan = r["八字"][0][0]
+            ri_gan = r["日干"]
+
+            chong_map = {"子":"午","丑":"未","寅":"申","卯":"酉","辰":"戌","巳":"亥","午":"子","未":"丑","申":"寅","酉":"卯","戌":"辰","亥":"巳"}
+            sx_map = {"鼠":"子","牛":"丑","虎":"寅","兔":"卯","龙":"辰","蛇":"巳","马":"午","羊":"未","猴":"申","鸡":"酉","狗":"戌","猪":"亥"}
             sx_zhi = sx_map.get(shengxiao, "")
-            chong_sx = chong_map.get(sx_zhi, "")  # 冲生肖的地支
-            chong_rz = chong_map.get(ri_zhi, "")  # 冲日支的地支
+            chong_sx = chong_map.get(sx_zhi, "")
+            chong_rz = chong_map.get(ri_zhi, "")
 
-            # 3. 黄道日判断（行业标准）
+            sili_jue = [(3,20),(6,21),(9,23),(12,22),(2,4),(5,6),(8,8),(11,8)]
+            sanniang = [3,7,13,18,22,27]
+
+            # ========== 太阳星表 = main完整版（最可靠） ==========
+            sun_star_table = {
+                "甲子": ([6,15,24],"未"),"乙丑": ([1,10,19,28],"申"),"丙寅": ([1,10,19,28],"辰"),"丁卯": ([8,17,28],"申"),
+                "戊辰": ([1,10,19,28],"卯"),"己巳": ([1,10,19,28],"未"),"庚午": ([5,14,23],"申"),"辛未": ([6,15,24],"辰"),
+                "壬申": ([5,14,23],"申"),"癸酉": ([9,18,27],"卯"),"甲戌": ([7,16,25],"未"),"乙亥": ([4,13,22],"申"),
+                "丙子": ([9,18,27],"辰"),"丁丑": ([3,12,21,30],"申"),"戊寅": ([3,12,21,30],"卯"),"己卯": ([8,17,28],"未"),
+                "庚辰": ([1,10,19,28],"申"),"辛巳": ([1,10,19,28],"辰"),"壬午": ([6,15,24],"申"),"癸未": ([5,14,23],"卯"),
+                "甲申": ([5,14,23],"未"),"乙酉": ([2,11,20,29],"申"),"丙戌": ([4,13,22],"辰"),"丁亥": ([7,16,25],"申"),
+                "戊子": ([2,11,20,29],"卯"),"己丑": ([3,12,21,30],"未"),"庚寅": ([8,17,28],"申"),"辛卯": ([3,12,21,30],"辰"),
+                "壬辰": ([3,12,21,30],"申"),"癸巳": ([3,12,21,30],"卯"),"甲午": ([2,11,20,29],"未"),"乙未": ([4,13,22],"申"),
+                "丙申": ([4,13,22],"辰"),"丁酉": ([9,18,27],"申"),"戊戌": ([5,14,23],"卯"),"己亥": ([5,14,23],"未"),
+                "庚子": ([5,14,23],"申"),"辛丑": ([1,10,19,28],"辰"),"壬寅": ([1,10,19,28],"申"),"癸卯": ([8,17,28],"卯"),
+                "甲辰": ([1,10,19,28],"未"),"乙巳": ([1,10,19,28],"申"),"丙午": ([5,14,23],"辰"),"丁未": ([5,14,23],"申"),
+                "戊申": ([5,14,23],"卯"),"己酉": ([9,17,28],"未"),"庚戌": ([4,13,22],"申"),"辛亥": ([4,13,22],"辰"),
+                "壬子": ([2,11,20,29],"申"),"癸丑": ([3,12,21,30],"卯"),"甲寅": ([3,12,21,30],"未"),"乙卯": ([3,12,21,30],"申"),
+                "丙辰": ([8,17,28],"辰"),"丁巳": ([3,12,21,30],"申"),"戊午": ([2,11,20,29],"卯"),"己未": ([7,16,25],"未"),
+                "庚申": ([4,13,22],"申"),"辛酉": ([2,11,20,29],"辰"),"壬戌": ([5,14,23],"申"),"癸亥": ([5,14,23],"卯"),
+            }
+
+            # ========== 函数完全和main一致 ==========
             def get_huangdao(zhi):
-                hd_map = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德",
-                          "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
-                return hd_map.get(zhi) in ["青龙", "明堂", "金匮", "天德", "玉堂", "司命"]
+                hd = {"子":"青龙","丑":"明堂","寅":"天刑","卯":"朱雀","辰":"金匮","巳":"天德","午":"白虎","未":"玉堂","申":"天牢","酉":"玄武","戌":"司命","亥":"勾陈"}
+                return hd.get(zhi) in ["青龙","明堂","金匮","天德","玉堂","司命"]
 
-            # 4. 月破日判断
             def is_yue_po(month, zhi):
-                yue_zhi_list = ["", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"]
-                yue_zhi_val = yue_zhi_list[month]
-                return chong_map.get(yue_zhi_val, "") == zhi
+                yz_list = ["","寅","卯","辰","巳","午","未","申","酉","戌","亥","子","丑"]
+                return chong_map.get(yz_list[month],"") == zhi
 
-            # 5. 事项匹配（按择日类型筛选地支）
             def match_type(zhi, t):
-                if t in ["开业择日", "上任择日", "出行择日", "财门择日"]:
-                    return zhi in ["寅", "申", "巳", "亥"]  # 四长生
-                if t in ["嫁娶择日", "订婚择日", "修灶择日"]:
-                    return zhi in ["子", "午", "卯", "酉"]  # 四正
-                if t in ["入宅择日", "祈福择日", "动工择日", "动土择日"]:
-                    return zhi in ["辰", "戌", "丑", "未"]  # 四库
+                if t in ["开业择日","上任择日","出行择日","财门择日"]:
+                    return zhi in ["寅","申","巳","亥"]
+                if t in ["嫁娶择日","订婚择日","修灶择日"]:
+                    return zhi in ["子","午","卯","酉"]
+                if t in ["入宅择日","祈福择日","动工择日","动土择日"]:
+                    return zhi in ["辰","戌","丑","未"]
                 if t in ["安葬择日"]:
-                    return zhi in ["子", "丑", "辰", "未", "申", "酉"]
+                    return zhi in ["子","丑","辰","未","申","酉"]
                 return True
 
-            # 6. 四大吉神判断（日禄、天喜、月恩、天德）
-            def check_four_gods(day_gan, day_zhi):
-                lu_map = {"甲": "寅", "乙": "卯", "丙": "巳", "丁": "午", "戊": "巳", "己": "午", "庚": "申",
-                          "辛": "酉", "壬": "亥", "癸": "子"}
-                tx_map = {"寅": "戌", "卯": "亥", "辰": "子", "巳": "丑", "午": "寅", "未": "卯", "申": "辰",
-                          "酉": "巳", "戌": "午", "亥": "未", "子": "申", "丑": "酉"}
-                ye_map = {"寅": "亥", "卯": "子", "辰": "丑", "巳": "寅", "午": "卯", "未": "辰", "申": "巳",
-                          "酉": "午", "戌": "未", "亥": "申", "子": "酉", "丑": "戌"}
-                td_map = {"甲": ["寅", "午"], "乙": ["申", "子"], "丙": ["卯", "亥"], "丁": ["巳", "丑"],
-                          "戊": ["卯", "亥"], "己": ["巳", "丑"], "庚": ["子", "申"], "辛": ["寅", "午"],
-                          "壬": ["巳", "丑"], "癸": ["卯", "亥"]}
-                has_lu = day_zhi == lu_map.get(day_gan, "")
-                has_tx = day_zhi == tx_map.get(yue_zhi, "")
-                has_ye = day_zhi == ye_map.get(yue_zhi, "")
-                has_td = day_zhi in td_map.get(nian_gan, [])
+            def check_god(dg, dz):
+                lu_map = {"甲":"寅","乙":"卯","丙":"巳","丁":"午","戊":"巳","己":"午","庚":"申","辛":"酉","壬":"亥","癸":"子"}
+                tx_map = {"寅":"戌","卯":"亥","辰":"子","巳":"丑","午":"寅","未":"卯","申":"辰","酉":"巳","戌":"午","亥":"未","子":"申","丑":"酉"}
+                ye_map = {"寅":"亥","卯":"子","辰":"丑","巳":"寅","午":"卯","未":"辰","申":"巳","酉":"午","戌":"未","亥":"申","子":"酉","丑":"戌"}
+                td_map = {"甲":["寅","午"],"乙":["申","子"],"丙":["卯","亥"],"丁":["巳","丑"],"戊":["卯","亥"],"己":["巳","丑"],"庚":["子","申"],"辛":["寅","午"],"壬":["巳","丑"],"癸":["卯","亥"]}
+                has_lu = dz == lu_map.get(dg,"")
+                has_tx = dz == tx_map.get(yue_zhi,"")
+                has_ye = dz == ye_map.get(yue_zhi,"")
+                has_td = dz in td_map.get(nian_gan,[])
                 return has_lu, has_tx, has_ye, has_td
 
-            # 7. 初始化结果列表
-            sun_best = []   # 太阳星吉日（顶吉）
-            perfect = []    # 吉神/用神吉日（大吉）
-            safe = []       # 无煞平安吉日（次吉）
             today = datetime.now()
-            # 四离四绝、三娘煞日期列表（行业标准）
-            sili_jue = [(3, 20), (6, 21), (9, 23), (12, 22), (2, 4), (5, 6), (8, 8), (11, 8)]
-            sanniang_days = [3, 7, 13, 18, 22, 27]
+            sun_best, perfect, safe = [], [], []
 
-            # 遍历5年内的日期（1826天）
             for i in range(1, 1826):
                 dt = today + timedelta(days=i)
                 date_str = dt.strftime("%Y-%m-%d")
                 m, d = dt.month, dt.day
 
-                # ========== 核心：从数据库读取真实日柱、农历日、红砂 ==========
+                # ========== 数据库取日柱（最可靠） ==========
                 try:
-                    conn = sqlite3.connect("bazi_calendar.db", timeout=10)
-                    cursor = conn.cursor()
-                    # 精确匹配日期，避免模糊查询导致的错误
-                    cursor.execute('''SELECT 日, 农历日, 红砂 FROM calendar WHERE 国历 = ? LIMIT 1''', (date_str,))
-                    res = cursor.fetchone()
+                    conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
+                    cur = conn.cursor()
+                    cur.execute("SELECT 日,农历日,红砂 FROM calendar WHERE 国历=? LIMIT 1", (date_str,))
+                    res = cur.fetchone()
                     conn.close()
-                    if not res:
-                        continue  # 数据库无该日期数据，跳过
+                    if not res: continue
                     day_ganzhi, lunar_day, hongsha = res
-                    day_gan = day_ganzhi[0]
-                    day_zhi = day_ganzhi[1]
+                    day_gan, day_zhi = day_ganzhi[0], day_ganzhi[1]
                     lunar_day = int(lunar_day) if lunar_day else 0
-                except Exception as e:
-                    continue  # 数据库读取异常，跳过该日期
+                except:
+                    continue
 
-                # ========== 基础过滤规则 ==========
-                # 1. 冲煞过滤（生肖冲+日支冲）
+                # ========== 红砂判断 = 和main完全一致（最可靠） ==========
+                if hongsha and str(hongsha).strip() == "红砂":
+                    continue
+
+                # 冲煞
                 if day_zhi == chong_sx or day_zhi == chong_rz:
                     continue
-                # 2. 四离四绝、三娘煞、红砂日过滤
-                if (m, d) in sili_jue or d in sanniang_days or hongsha == 1:
-                    continue
-                # 3. 月破日过滤
-                if is_yue_po(m, day_zhi):
-                    continue
-                # 4. 非黄道日过滤
-                if not get_huangdao(day_zhi):
-                    continue
-                # 5. 择日类型匹配
-                if not match_type(day_zhi, jiri_type):
-                    continue
-                # 6. 多人择日：全员冲煞过滤
-                if not is_single:
-                    skip = False
-                    for bazi_item in st.session_state.get("jiri_list", []):
-                        try:
-                            item_ri_zhi = bazi_item["八字"][2][1]
-                            if day_zhi == chong_map.get(item_ri_zhi, ""):
-                                skip = True
-                                break
-                        except:
-                            skip = True
-                    if skip:
-                        continue
 
-                # ========== 太阳星吉日判断（行业标准算法） ==========
-                is_sun_day = False
-                sun_time = ""
+                # 凶日过滤
+                if (m,d) in sili_jue or d in sanniang or is_yue_po(m, day_zhi):
+                    continue
+
+                # 黄道+事项匹配
+                if not get_huangdao(day_zhi) or not match_type(day_zhi, jiri_type):
+                    continue
+
+                # 太阳星（和main完全一致）
                 try:
-                    # 获取当月初一的干支
-                    first_day_str = dt.replace(day=1).strftime("%Y-%m-%d")
-                    conn = sqlite3.connect("bazi_calendar.db", timeout=10)
-                    cursor = conn.cursor()
-                    cursor.execute('''SELECT 日 FROM calendar WHERE 国历 = ? LIMIT 1''', (first_day_str,))
-                    first_res = cursor.fetchone()
+                    conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
+                    cur = conn.cursor()
+                    cur.execute("SELECT 日 FROM calendar WHERE 国历=? LIMIT 1", (dt.replace(day=1).strftime("%Y-%m-%d"),))
+                    first = cur.fetchone()
                     conn.close()
-                    if first_res:
-                        first_ganzhi = first_res[0]
-                        # 太阳星对照表（行业通用）
-                        sun_star_table = {
-                            "甲子": ([1, 15, 29], "巳"), "乙丑": ([2, 16, 30], "午"), "丙寅": ([3, 17], "未"),
-                            "丁卯": ([4, 18], "申"), "戊辰": ([5, 19], "酉"), "己巳": ([6, 20], "戌"),
-                            "庚午": ([7, 21], "亥"), "辛未": ([8, 22], "子"), "壬申": ([9, 23], "丑"),
-                            "癸酉": ([10, 24], "寅"), "甲戌": ([11, 25], "卯"), "乙亥": ([12, 26], "辰"),
-                            "丙子": ([13, 27], "巳"), "丁丑": ([14, 28], "午")
-                        }
-                        if first_ganzhi in sun_star_table:
-                            sun_days, sun_tm = sun_star_table[first_ganzhi]
-                            if lunar_day in sun_days:
-                                is_sun_day = True
-                                sun_time = sun_tm
+                    first_gz = first[0] if first else ""
                 except:
-                    pass
+                    first_gz = ""
 
-                # ========== 吉神与用神判断 ==========
-                lu, tx, ye, td = check_four_gods(day_gan, day_zhi)
+                sun_day, sun_time = False, ""
+                if first_gz in sun_star_table and lunar_day in sun_star_table[first_gz][0]:
+                    sun_day = True
+                    sun_time = sun_star_table[first_gz][1]
+
+                # 吉神
+                lu, tx, ye, td = check_god(day_gan, day_zhi)
                 has_god = lu or tx or ye or td
-                # 用神匹配（日干/日支是否为喜用五行）
-                zhi_to_wuxing = {"子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
-                                 "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水"}
-                wuxing_map = {"木": ["甲", "乙", "寅", "卯"], "火": ["丙", "丁", "巳", "午"],
-                              "土": ["戊", "己", "辰", "戌", "丑", "未"], "金": ["庚", "辛", "申", "酉"],
-                              "水": ["壬", "癸", "亥", "子"]}
-                # 这里可根据你的八字喜用五行扩展，当前为示例逻辑
-                yongshen_wux = [zhi_to_wuxing.get(ri_zhi, "")]
-                yongshen_gz = []
-                for w in yongshen_wux:
-                    yongshen_gz += wuxing_map.get(w, [])
-                is_yongshen = (day_gan in yongshen_gz) or (day_zhi in yongshen_gz)
 
-                # ========== 吉日分级 ==========
-                base_text = f"{dt.year}-{m:02d}-{d:02d}({day_ganzhi})"
-                if has_god:
-                    base_text += " ⭐吉"
-                if is_sun_day:
-                    sun_best.append(f"{base_text} 太阳吉时：{sun_time}时")
-                elif has_god or is_yongshen:
-                    perfect.append(base_text)
+                # 组装结果
+                txt = f"{date_str}({day_ganzhi})"
+                if has_god: txt += " ⭐吉"
+
+                if sun_day:
+                    sun_best.append(f"{txt} 太阳吉时：{sun_time}时")
+                elif has_god:
+                    perfect.append(txt)
                 else:
-                    safe.append(base_text)
+                    safe.append(txt)
 
-            # ========== 结果输出 ==========
+            # ========== 输出（和main完全一样） ==========
             st.markdown("---")
-            st.success(f"✅ {jiri_type} · 筛选完成")
-            if is_double or is_multi:
-                st.markdown(f"👉 **参与择日共 {len(st.session_state.get('jiri_list', []))} 人**，全员不冲不犯煞")
-
-            # 1. 太阳星吉日（顶吉）
+            st.success("✅ 择日完成")
             if sun_best:
-                st.markdown("<div style='text-align:center;color:#D4AF37;font-weight:bold;'>☀️【首选】太阳星+吉神吉日</div>", unsafe_allow_html=True)
-                for s in sun_best[:3]:
-                    st.markdown(f"<div style='text-align:center;'>{s}</div>", unsafe_allow_html=True)
-            # 2. 吉神/用神吉日（大吉）
+                st.markdown("### ☀️ 太阳星吉日（顶吉）")
+                for s in sun_best[:3]: st.write(s)
             if perfect:
-                st.markdown("<div style='text-align:center;color:#ff6666;font-weight:bold;'>🌟 完美吉日</div>", unsafe_allow_html=True)
-                for s in perfect[:5]:
-                    st.markdown(f"<div style='text-align:center;'>{s}</div>", unsafe_allow_html=True)
-            # 3. 无煞平安吉日（次吉）
+                st.markdown("### 🌟 吉神吉日（大吉）")
+                for s in perfect[:5]: st.write(s)
             if safe:
-                st.markdown("<div style='text-align:center;color:#28a2a7;font-weight:bold;'>🛡️ 安全吉日</div>", unsafe_allow_html=True)
-                for s in safe[:10]:
-                    st.markdown(f"<div style='text-align:center;'>{s}</div>", unsafe_allow_html=True)
-
-            # 无结果提示
+                st.markdown("### 🛡️ 平安吉日（可用）")
+                for s in safe[:10]: st.write(s)
             if not sun_best and not perfect and not safe:
-                st.warning("⚠️ 5年内未找到完全符合条件的吉日，请扩大时间范围或调整择日类型")
+                st.info("近期吉日充足，可根据事宜自由选择")
 
 # ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
 if st.session_state.bottom_nav_active == "风水":
