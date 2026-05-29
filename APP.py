@@ -8,16 +8,6 @@ import sys
 import requests
 from datetime import  timedelta
 import sqlite3
-# ===================== 导出Word/PDF专用依赖 =====================
-try:
-    from docx import Document
-    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-except ImportError:
-    Document = None
-try:
-    from fpdf import FPDF
-except ImportError:
-    FPDF = None
 # ===================== 资源路径（和APP0完全一样） =====================
 def resource_path(relative_path: str) -> str:
     try:
@@ -59,12 +49,16 @@ LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "
 BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
 
 # ===================== 【修复版】导出Word/PDF函数（兼容Streamlit Cloud） =====================
+try:
+    from docx import Document
+    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+except ImportError:
+    Document = None
 import io
 from datetime import datetime
 # Word导出兼容处理
 try:
     from docx import Document
-
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
@@ -1206,9 +1200,10 @@ if st.session_state.bottom_nav_active == "解读":
                 else:
                     st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
 
-            # ========== 导出PDF按钮（自动判断是否安装，修复字体报错） ==========
+            # ========== 导出PDF按钮（修复判断） ==========
             with col2:
-                if FPDF is not None:
+                # 👇 把这里改成 FPDF_AVAILABLE
+                if FPDF_AVAILABLE:
                     pdf_file = generate_pdf_doc(bazi_data, gender, st.session_state.ai_result)
                     st.download_button(
                         label="📄 导出PDF",
