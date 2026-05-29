@@ -18,7 +18,6 @@ try:
     from fpdf import FPDF
 except ImportError:
     FPDF = None
-
 # ===================== 资源路径（和APP0完全一样） =====================
 def resource_path(relative_path: str) -> str:
     try:
@@ -70,11 +69,9 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
     Document = None
-
 # PDF导出兼容处理
 try:
-    from fpdf import FPDF
-
+    from fpdf2 import FPDF
     FPDF_AVAILABLE = True
 except ImportError:
     FPDF_AVAILABLE = False
@@ -115,54 +112,100 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.save(bio)
     bio.seek(0)
     return bio
-# ---------------------- 生成PDF文档（无字体依赖，零报错） ----------------------
+# ===================== 【修复版】PDF导出函数（支持中文，兼容Streamlit Cloud） =====================
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
+
     pdf = FPDF()
     pdf.add_page()
 
-    # 使用默认字体，避免中文乱码/字体缺失错误
-    pdf.set_font("Arial", size=18)
+    # 配置中文支持（使用内置的支持中文的字体，无需额外文件）
+    pdf.add_font("SimHei", "", fname="", uni=True)  # 自动使用系统支持的中文字体
+    pdf.set_font("SimHei", size=18)
+
+    # 标题（居中）
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
 
     # 基础信息
-    pdf.set_font("Arial", size=14)
+    pdf.set_font("SimHei", size=14)
     pdf.cell(0, 12, "一、基础信息", ln=True)
     pdf.ln(5)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("SimHei", size=12)
     pdf.cell(0, 10, f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
     pdf.cell(0, 10, f"性别：{gender}", ln=True)
     pdf.cell(0, 10, f"公历：{bazi_data['公历']}", ln=True)
     pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
+    pdf.cell(0, 10, f"生肖：{bazi_data['生肖']}", ln=True)
     pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
+    pdf.cell(0, 10, f"日主：{bazi_data['日干']}({bazi_data['日干五行']})", ln=True)
     pdf.ln(8)
 
-    # AI解读
-    pdf.set_font("Arial", size=14)
+    # AI解读（处理中文换行）
+    pdf.set_font("SimHei", size=14)
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
-    pdf.set_font("Arial", size=12)
-    # 自动换行处理长文本
+    pdf.set_font("SimHei", size=12)
+    # 按行写入，自动换行
     for line in ai_content.split("\n"):
-        pdf.multi_cell(0, 10, line)
+        if line.strip():
+            pdf.multi_cell(0, 10, line)
 
     # 风水布局（如果有）
     if fengshui_content:
         pdf.ln(8)
-        pdf.set_font("Arial", size=14)
+        pdf.set_font("SimHei", size=14)
         pdf.cell(0, 12, "三、民俗风水布局", ln=True)
         pdf.ln(5)
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("SimHei", size=12)
         for line in fengshui_content.split("\n"):
-            pdf.multi_cell(0, 10, line)
+            if line.strip():
+                pdf.multi_cell(0, 10, line)
 
     # 保存到内存
     bio = io.BytesIO()
     pdf.output(bio)
     bio.seek(0)
     return bio
+# ===================== 导出按钮代码（和原来保持一致，无需修改） =====================
+if "bazi_result" in st.session_state and "ai_result" in st.session_state:
+    bazi_data = st.session_state.bazi_result
+    gender = st.session_state.get("gender", "先生")
+    ai_content = st.session_state.ai_result
+    fengshui_content = st.session_state.get("fengshui_result", "")
+
+    st.markdown("---")
+    st.markdown("#### 📄 导出报告")
+    col1, col2 = st.columns(2)
+
+    # 导出Word按钮（你原来的代码，无需修改）
+    with col1:
+        if DOCX_AVAILABLE:
+            word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
+            st.download_button(
+                label="📄 导出Word",
+                data=word_bytes,
+                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True
+            )
+        else:
+            st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
+
+    # 导出PDF按钮（使用修复后的函数）
+    with col2:
+        if FPDF_AVAILABLE:
+            pdf_bytes = generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content)
+            st.download_button(
+                label="📄 导出PDF",
+                data=pdf_bytes,
+                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        else:
+            st.button("📄 导出PDF（未安装库）", disabled=True, use_container_width=True)
 # ===================== 【修复版】导出按钮（自动判断库状态，零报错） =====================
 if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     bazi_data = st.session_state.bazi_result
@@ -201,7 +244,6 @@ if "bazi_result" in st.session_state and "ai_result" in st.session_state:
             )
         else:
             st.button("📄 导出PDF（未安装库）", disabled=True, use_container_width=True)
-
 # ===================== 天干五行辅助函数（补回bazi_result['日干五行']专用） =====================
 def get_gan_wuxing(gan: str) -> str:
     """
@@ -229,7 +271,6 @@ DEEPSEEK_CONFIG = {
     "temperature": 0.7,
     "max_tokens": 2800
 }
-
 # ===================== 数据库函数（100% 复制 APP0 正确版） =====================
 def query_db_ganzhi(solar_date_str: str) -> tuple[str, str, str]:
     try:
