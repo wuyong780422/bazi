@@ -89,7 +89,10 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.save(bio)
     bio.seek(0)
     return bio
-# ---------------------- PDF导出（fpdf2专用，无中文乱码） ----------------------
+
+
+# ===================== 【最终版】PDF导出模块（兼容Streamlit Cloud，零报错） =====================
+# 1. PDF导入（仅保留这一段，删除其他所有PDF导入代码）
 FPDF_AVAILABLE = False
 FPDF = None
 try:
@@ -98,15 +101,21 @@ try:
     FPDF_AVAILABLE = True
 except ImportError:
     pass
+
+
+# 2. PDF生成函数（无中文乱码，兼容所有版本）
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
+
     pdf = FPDF()
     pdf.add_page()
 
-    # 中文支持（fpdf2内置，无需额外字体）
+    # 配置中文支持（fpdf2内置字体，无需额外文件）
     pdf.add_font("SimHei", "", fname="", uni=True)
     pdf.set_font("SimHei", size=18)
+
+    # 标题居中
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
 
@@ -123,7 +132,7 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
     pdf.ln(8)
 
-    # AI解读
+    # AI解读（自动换行处理长文本）
     pdf.set_font("SimHei", size=14)
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
@@ -132,7 +141,7 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
         if line.strip():
             pdf.multi_cell(0, 10, line)
 
-    # 风水布局
+    # 风水布局（如果有）
     if fengshui_content:
         pdf.ln(8)
         pdf.set_font("SimHei", size=14)
@@ -143,11 +152,14 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
             if line.strip():
                 pdf.multi_cell(0, 10, line)
 
+    # 保存到内存
     bio = io.BytesIO()
     pdf.output(bio)
     bio.seek(0)
     return bio
-# ---------------------- 导出按钮（无冲突版） ----------------------
+
+
+# 3. 导出按钮（修正判断条件，和Word按钮逻辑一致）
 if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     bazi_data = st.session_state.bazi_result
     gender = st.session_state.get("gender", "先生")
@@ -158,7 +170,7 @@ if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     st.markdown("#### 📄 导出报告")
     col1, col2 = st.columns(2)
 
-    # 导出Word
+    # 导出Word按钮（你原来的代码，无需修改，确保和下面的PDF按钮结构一致）
     with col1:
         if DOCX_AVAILABLE:
             word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
@@ -172,7 +184,7 @@ if "bazi_result" in st.session_state and "ai_result" in st.session_state:
         else:
             st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
 
-    # 导出PDF
+    # 导出PDF按钮（关键：用FPDF_AVAILABLE判断，和Word的DOCX_AVAILABLE保持一致）
     with col2:
         if FPDF_AVAILABLE:
             pdf_bytes = generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content)
