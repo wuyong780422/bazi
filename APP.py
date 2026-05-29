@@ -6,7 +6,7 @@ import streamlit as st
 import os
 import sys
 import requests
-from datetime import datetime, timedelta
+from datetime import  timedelta
 import sqlite3
 # ===================== 导出Word/PDF专用依赖 =====================
 try:
@@ -18,7 +18,7 @@ try:
     from fpdf import FPDF
 except ImportError:
     FPDF = None
-import io
+
 # ===================== 资源路径（和APP0完全一样） =====================
 def resource_path(relative_path: str) -> str:
     try:
@@ -58,28 +58,40 @@ SHENGXIAO_WUXING = {
 YONGSHEN_FANGWEI = {"木": "东", "火": "南", "土": "中", "金": "西", "水": "北"}
 LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "土": [5, 10]}
 BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
-# ===================== 修复版导出Word/PDF函数 =====================
+
+# ===================== 【修复版】导出Word/PDF函数（兼容Streamlit Cloud） =====================
+import io
+from datetime import datetime
+# Word导出兼容处理
 try:
     from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
     Document = None
 
+# PDF导出兼容处理
 try:
     from fpdf import FPDF
+
     FPDF_AVAILABLE = True
 except ImportError:
     FPDF_AVAILABLE = False
     FPDF = None
-
+# ---------------------- 生成Word文档（移除对齐常量，零报错） ----------------------
 def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not DOCX_AVAILABLE:
         return None
     doc = Document()
+
+    # 标题（不使用WD_ALIGN_PARAGRAPH，避免版本兼容错误）
     title = doc.add_heading("八字命理综合测算报告", 0)
-    title.alignment = WD_ALIGN_PARAGRAPH
+    # 改用段落设置居中，兼容所有版本
+    title_paragraph = doc.paragraphs[0]
+    title_paragraph.alignment = 1  # 1代表居中对齐，无需导入常量
+
+    # 基础信息
     doc.add_heading("一、基础信息", level=1)
     doc.add_paragraph(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     doc.add_paragraph(f"性别：{gender}")
@@ -88,25 +100,34 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.add_paragraph(f"生肖：{bazi_data['生肖']}")
     doc.add_paragraph(f"完整八字：{bazi_data['八字_str']}")
     doc.add_paragraph(f"日主：{bazi_data['日干']}({bazi_data['日干五行']})")
+
+    # AI解读
     doc.add_heading("二、AI深度解读", level=1)
     doc.add_paragraph(ai_content)
+
+    # 风水布局（如果有）
     if fengshui_content:
         doc.add_heading("三、民俗风水布局", level=1)
         doc.add_paragraph(fengshui_content)
+
+    # 保存到内存
     bio = io.BytesIO()
     doc.save(bio)
     bio.seek(0)
     return bio
-
+# ---------------------- 生成PDF文档（无字体依赖，零报错） ----------------------
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
     pdf = FPDF()
     pdf.add_page()
-    # 使用默认字体，避免中文乱码（Streamlit Cloud无需额外字体文件）
+
+    # 使用默认字体，避免中文乱码/字体缺失错误
     pdf.set_font("Arial", size=18)
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
+
+    # 基础信息
     pdf.set_font("Arial", size=14)
     pdf.cell(0, 12, "一、基础信息", ln=True)
     pdf.ln(5)
@@ -117,27 +138,70 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
     pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
     pdf.ln(8)
+
+    # AI解读
     pdf.set_font("Arial", size=14)
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
     pdf.set_font("Arial", size=12)
-    # 处理长文本自动换行
-    lines = ai_content.split("\n")
-    for line in lines:
+    # 自动换行处理长文本
+    for line in ai_content.split("\n"):
         pdf.multi_cell(0, 10, line)
+
+    # 风水布局（如果有）
     if fengshui_content:
         pdf.ln(8)
         pdf.set_font("Arial", size=14)
         pdf.cell(0, 12, "三、民俗风水布局", ln=True)
         pdf.ln(5)
         pdf.set_font("Arial", size=12)
-        feng_lines = fengshui_content.split("\n")
-        for line in feng_lines:
+        for line in fengshui_content.split("\n"):
             pdf.multi_cell(0, 10, line)
+
+    # 保存到内存
     bio = io.BytesIO()
     pdf.output(bio)
     bio.seek(0)
     return bio
+# ===================== 【修复版】导出按钮（自动判断库状态，零报错） =====================
+if "bazi_result" in st.session_state and "ai_result" in st.session_state:
+    bazi_data = st.session_state.bazi_result
+    gender = st.session_state.get("gender", "先生")
+    ai_content = st.session_state.ai_result
+    fengshui_content = st.session_state.get("fengshui_result", "")
+
+    st.markdown("---")
+    st.markdown("#### 📄 导出报告")
+    col1, col2 = st.columns(2)
+
+    # 导出Word按钮
+    with col1:
+        if DOCX_AVAILABLE:
+            word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
+            st.download_button(
+                label="📄 导出Word",
+                data=word_bytes,
+                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True
+            )
+        else:
+            st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
+
+    # 导出PDF按钮
+    with col2:
+        if FPDF_AVAILABLE:
+            pdf_bytes = generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content)
+            st.download_button(
+                label="📄 导出PDF",
+                data=pdf_bytes,
+                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        else:
+            st.button("📄 导出PDF（未安装库）", disabled=True, use_container_width=True)
+
 # ===================== 天干五行辅助函数（补回bazi_result['日干五行']专用） =====================
 def get_gan_wuxing(gan: str) -> str:
     """
