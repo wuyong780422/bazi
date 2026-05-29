@@ -112,7 +112,7 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.save(bio)
     bio.seek(0)
     return bio
-# ===================== 【修复版】PDF导出函数（支持中文，兼容Streamlit Cloud） =====================
+# ===================== 【最终修复版】PDF导出函数（支持中文，兼容Streamlit Cloud） =====================
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
@@ -121,7 +121,7 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.add_page()
 
     # 配置中文支持（使用内置的支持中文的字体，无需额外文件）
-    pdf.add_font("SimHei", "", fname="", uni=True)  # 自动使用系统支持的中文字体
+    pdf.add_font("SimHei", "", fname="", uni=True)
     pdf.set_font("SimHei", size=18)
 
     # 标题（居中）
@@ -147,7 +147,6 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
     pdf.set_font("SimHei", size=12)
-    # 按行写入，自动换行
     for line in ai_content.split("\n"):
         if line.strip():
             pdf.multi_cell(0, 10, line)
@@ -168,44 +167,6 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.output(bio)
     bio.seek(0)
     return bio
-# ===================== 导出按钮代码（和原来保持一致，无需修改） =====================
-if "bazi_result" in st.session_state and "ai_result" in st.session_state:
-    bazi_data = st.session_state.bazi_result
-    gender = st.session_state.get("gender", "先生")
-    ai_content = st.session_state.ai_result
-    fengshui_content = st.session_state.get("fengshui_result", "")
-
-    st.markdown("---")
-    st.markdown("#### 📄 导出报告")
-    col1, col2 = st.columns(2)
-
-    # 导出Word按钮（你原来的代码，无需修改）
-    with col1:
-        if DOCX_AVAILABLE:
-            word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
-            st.download_button(
-                label="📄 导出Word",
-                data=word_bytes,
-                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        else:
-            st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
-
-    # 导出PDF按钮（使用修复后的函数）
-    with col2:
-        if FPDF_AVAILABLE:
-            pdf_bytes = generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content)
-            st.download_button(
-                label="📄 导出PDF",
-                data=pdf_bytes,
-                file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        else:
-            st.button("📄 导出PDF（未安装库）", disabled=True, use_container_width=True)
 # ===================== 【修复版】导出按钮（自动判断库状态，零报错） =====================
 if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     bazi_data = st.session_state.bazi_result
