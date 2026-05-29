@@ -1,5 +1,4 @@
-streamlit
-python-docx
-fpdf2
-requests
-sqlite3
+# 必须和APP.py放在同一目录
+streamlit>=1.30.0
+python-docx>=0.8.11
+fpdf2>=2.7.4
