@@ -794,7 +794,7 @@ with tab5:
         # 这里执行排盘功能代码
         st.rerun()
 with tab6:
-    if st.button("良辰择日",use_container_width=True):
+    if st.button("开始择日",use_container_width=True):
         st.session_state.bottom_nav_active = "吉日"
         # 这里执行吉日功能代码
         st.rerun()
@@ -811,7 +811,7 @@ with tab8:
 
 # ===================== APP.py 终极修复：支持双胞胎+嫁娶限2人+对齐main =====================
 if st.session_state.bottom_nav_active == "吉日":
-    st.markdown("<div style='text-align:center;margin-top:20px;'><h3>📅 良辰吉日</h3></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;margin-top:20px;'><h3>📅 传统专业择日</h3></div>", unsafe_allow_html=True)
 
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先排盘再查询吉日")
@@ -820,8 +820,8 @@ if st.session_state.bottom_nav_active == "吉日":
     r = st.session_state.bazi_result
 
     jiri_type = st.radio(
-        "", ["开业择日","嫁娶择日","入宅择日","出行择日","祈福择日","订婚择日",
-             "动工择日","动土择日","上任择日","安葬择日","修灶择日","财门择日"],
+        "", ["开业择日","出行择日","上任择日","祈福择日","修灶择日","财门择日",
+             "嫁娶择日","订婚择日","入宅择日","动工择日","动土择日","安葬择日"],
         horizontal=True, label_visibility="collapsed"
     )
 
@@ -838,9 +838,9 @@ if st.session_state.bottom_nav_active == "吉日":
     if not is_single:
         st.markdown("---")
         if is_double:
-            st.markdown("🔴 **嫁娶/订婚择日：仅限 2 人（男女双方），支持双胞胎同盘**")
+            st.markdown("🔴 **嫁娶/订婚择日：仅限 2 人（男女双方），支持同盘**")
         else:
-            st.markdown("🔹 **多人择日：可添加多人，支持双胞胎重复添加同盘**")
+            st.markdown("🔹 **多人择日：可添加多人，支持重复添加同盘**")
 
         col_add, col_clear, col_start = st.columns(3)
 
