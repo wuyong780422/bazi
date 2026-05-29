@@ -1,3 +1,3 @@
-streamlit
+streamlit>=1.28.0
 python-docx>=0.8.11
-fpdf2>=2.7.4  # 替换原来的fpdf，支持中文更好
+fpdf2>=2.7.4  # 必须是fpdf2，不是旧版fpdf
