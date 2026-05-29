@@ -1156,7 +1156,8 @@ if st.session_state.bottom_nav_active == "解读":
                         data=word_file,
                         file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True
+                        use_container_width=True,
+                        key = "download_word_report"  # 这里写一个唯一的字符串即可
                     )
                 else:
                     st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
@@ -1191,3 +1192,5 @@ st.markdown(f"""
     <div class="nav-item" style="{s7}"></div>
 </div>
 """,unsafe_allow_html=True)
+
+
