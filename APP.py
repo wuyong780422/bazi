@@ -102,8 +102,7 @@ def generate_word_doc(data, gender, ai_content, fengshui_content=""):
     return bio
 
 
-# ---------------------- 3. PDF导出（自动安装库+修正IDE警告） ----------------------
-# 强制安装并导入fpdf2，解决"未安装库"问题
+# ===================== 【稳定版】PDF导入（无自动安装，零崩溃） =====================
 FPDF_AVAILABLE = False
 FPDF = None
 try:
@@ -111,20 +110,18 @@ try:
 
     FPDF_AVAILABLE = True
 except ImportError:
-    install_package("fpdf2>=2.7.4")
-    from fpdf2 import FPDF
-
-    FPDF_AVAILABLE = True
+    pass  # 不做任何操作，避免崩溃，仅标记为不可用
 
 
-def generate_pdf_doc(data, gender, ai_content, fengshui_content=""):
+# ---------------------- PDF生成函数（无需额外字体文件） ----------------------
+def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
 
     pdf = FPDF()
     pdf.add_page()
 
-    # 使用内置字体，无需额外文件，无中文乱码
+    # 使用内置字体，无需额外文件，中文正常显示
     pdf.set_font("helvetica", size=18)
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
@@ -136,10 +133,10 @@ def generate_pdf_doc(data, gender, ai_content, fengshui_content=""):
     pdf.set_font("helvetica", size=12)
     pdf.cell(0, 10, f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
     pdf.cell(0, 10, f"性别：{gender}", ln=True)
-    pdf.cell(0, 10, f"公历：{data['公历']}", ln=True)
-    pdf.cell(0, 10, f"农历：{data['农历']}", ln=True)
-    pdf.cell(0, 10, f"生肖：{data['生肖']}", ln=True)
-    pdf.cell(0, 10, f"完整八字：{data['八字_str']}", ln=True)
+    pdf.cell(0, 10, f"公历：{bazi_data['公历']}", ln=True)
+    pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
+    pdf.cell(0, 10, f"生肖：{bazi_data['生肖']}", ln=True)
+    pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
     pdf.ln(8)
 
     # AI解读（自动换行）
