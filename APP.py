@@ -58,13 +58,28 @@ SHENGXIAO_WUXING = {
 YONGSHEN_FANGWEI = {"木": "东", "火": "南", "土": "中", "金": "西", "水": "北"}
 LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "土": [5, 10]}
 BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
-# ===================== 导出Word/PDF核心函数（复刻PC端完整版） =====================
+# ===================== 修复版导出Word/PDF函数 =====================
+try:
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    Document = None
+
+try:
+    from fpdf import FPDF
+    FPDF_AVAILABLE = True
+except ImportError:
+    FPDF_AVAILABLE = False
+    FPDF = None
+
 def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
-    if not Document:
+    if not DOCX_AVAILABLE:
         return None
     doc = Document()
     title = doc.add_heading("八字命理综合测算报告", 0)
-    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    title.alignment = WD_ALIGN_PARAGRAPH
     doc.add_heading("一、基础信息", level=1)
     doc.add_paragraph(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     doc.add_paragraph(f"性别：{gender}")
@@ -82,39 +97,43 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.save(bio)
     bio.seek(0)
     return bio
+
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
-    if not FPDF:
+    if not FPDF_AVAILABLE:
         return None
     pdf = FPDF()
     pdf.add_page()
-    pdf.add_font("simhei", "", resource_path("simhei.ttf"), uni=True)
-    pdf.set_font("simhei", size=18)
+    # 使用默认字体，避免中文乱码（Streamlit Cloud无需额外字体文件）
+    pdf.set_font("Arial", size=18)
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
-    pdf.set_font("simhei", size=14)
+    pdf.set_font("Arial", size=14)
     pdf.cell(0, 12, "一、基础信息", ln=True)
     pdf.ln(5)
-    pdf.set_font("simhei", size=12)
+    pdf.set_font("Arial", size=12)
     pdf.cell(0, 10, f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
     pdf.cell(0, 10, f"性别：{gender}", ln=True)
     pdf.cell(0, 10, f"公历：{bazi_data['公历']}", ln=True)
     pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
-    pdf.cell(0, 10, f"生肖：{bazi_data['生肖']}", ln=True)
-    pdf.cell(0, 10, f"八字：{bazi_data['八字_str']}", ln=True)
-    pdf.cell(0, 10, f"日主：{bazi_data['日干']}({bazi_data['日干五行']})", ln=True)
+    pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
     pdf.ln(8)
-    pdf.set_font("simhei", size=14)
+    pdf.set_font("Arial", size=14)
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
-    pdf.set_font("simhei", size=12)
-    pdf.multi_cell(0, 10, ai_content)
+    pdf.set_font("Arial", size=12)
+    # 处理长文本自动换行
+    lines = ai_content.split("\n")
+    for line in lines:
+        pdf.multi_cell(0, 10, line)
     if fengshui_content:
         pdf.ln(8)
-        pdf.set_font("simhei", size=14)
+        pdf.set_font("Arial", size=14)
         pdf.cell(0, 12, "三、民俗风水布局", ln=True)
         pdf.ln(5)
-        pdf.set_font("simhei", size=12)
-        pdf.multi_cell(0, 10, fengshui_content)
+        pdf.set_font("Arial", size=12)
+        feng_lines = fengshui_content.split("\n")
+        for line in feng_lines:
+            pdf.multi_cell(0, 10, line)
     bio = io.BytesIO()
     pdf.output(bio)
     bio.seek(0)
@@ -977,7 +996,7 @@ if st.session_state.bottom_nav_active == "吉日":
 
 # ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
 if st.session_state.bottom_nav_active == "风水":
-    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属布局</h3></div>",
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属</h3></div>",
                 unsafe_allow_html=True)
 
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
@@ -1101,14 +1120,16 @@ if st.session_state.bottom_nav_active == "解读":
                     st.markdown(ai_result)
                 except Exception as e:
                     st.error(f"❌ 解读失败：{str(e)}")
-        # ===================== 导出按钮：解读完成后显示 =====================
+        # ===================== 【修复版】导出按钮：自动判断库是否安装 =====================
         if "ai_result" in st.session_state and st.session_state.ai_result:
             st.markdown("---")
             st.markdown("#### 📄 导出报告")
             col1, col2 = st.columns(2)
+
+            # ========== 导出Word按钮（自动判断是否安装） ==========
             with col1:
-                word_file = generate_word_doc(bazi_data, gender, st.session_state.ai_result)
-                if word_file:
+                if Document is not None:
+                    word_file = generate_word_doc(bazi_data, gender, st.session_state.ai_result)
                     st.download_button(
                         label="📄 导出Word",
                         data=word_file,
@@ -1118,9 +1139,11 @@ if st.session_state.bottom_nav_active == "解读":
                     )
                 else:
                     st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
+
+            # ========== 导出PDF按钮（自动判断是否安装，修复字体报错） ==========
             with col2:
-                pdf_file = generate_pdf_doc(bazi_data, gender, st.session_state.ai_result)
-                if pdf_file:
+                if FPDF is not None:
+                    pdf_file = generate_pdf_doc(bazi_data, gender, st.session_state.ai_result)
                     st.download_button(
                         label="📄 导出PDF",
                         data=pdf_file,
