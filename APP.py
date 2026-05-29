@@ -48,41 +48,28 @@ YONGSHEN_FANGWEI = {"木": "东", "火": "南", "土": "中", "金": "西", "水
 LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "土": [5, 10]}
 BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
 
-# ===================== 【修复版】导出Word/PDF函数（兼容Streamlit Cloud） =====================
-try:
-    from docx import Document
-    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-except ImportError:
-    Document = None
+# ===================== 【最终无冲突版】导出模块（直接替换原来的所有导出代码） =====================
 import io
 from datetime import datetime
-# Word导出兼容处理
+
+# ---------------------- Word导出（无WD_ALIGN_PARAGRAPH错误） ----------------------
+DOCX_AVAILABLE = False
+Document = None
 try:
     from docx import Document
+
     DOCX_AVAILABLE = True
 except ImportError:
-    DOCX_AVAILABLE = False
-    Document = None
-# PDF导出兼容处理
-try:
-    from fpdf2 import FPDF
-    FPDF_AVAILABLE = True
-except ImportError:
-    FPDF_AVAILABLE = False
-    FPDF = None
-# ---------------------- 生成Word文档（移除对齐常量，零报错） ----------------------
+    pass
 def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not DOCX_AVAILABLE:
         return None
     doc = Document()
-
-    # 标题（不使用WD_ALIGN_PARAGRAPH，避免版本兼容错误）
+    # 标题居中（兼容所有python-docx版本）
     title = doc.add_heading("八字命理综合测算报告", 0)
-    # 改用段落设置居中，兼容所有版本
     title_paragraph = doc.paragraphs[0]
-    title_paragraph.alignment = 1  # 1代表居中对齐，无需导入常量
+    title_paragraph.alignment = 1  # 1=居中，无需导入常量
 
-    # 基础信息
     doc.add_heading("一、基础信息", level=1)
     doc.add_paragraph(f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     doc.add_paragraph(f"性别：{gender}")
@@ -92,33 +79,34 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     doc.add_paragraph(f"完整八字：{bazi_data['八字_str']}")
     doc.add_paragraph(f"日主：{bazi_data['日干']}({bazi_data['日干五行']})")
 
-    # AI解读
     doc.add_heading("二、AI深度解读", level=1)
     doc.add_paragraph(ai_content)
-
-    # 风水布局（如果有）
     if fengshui_content:
         doc.add_heading("三、民俗风水布局", level=1)
         doc.add_paragraph(fengshui_content)
 
-    # 保存到内存
     bio = io.BytesIO()
     doc.save(bio)
     bio.seek(0)
     return bio
-# ===================== 【最终修复版】PDF导出函数（支持中文，兼容Streamlit Cloud） =====================
+# ---------------------- PDF导出（fpdf2专用，无中文乱码） ----------------------
+FPDF_AVAILABLE = False
+FPDF = None
+try:
+    from fpdf2 import FPDF
+
+    FPDF_AVAILABLE = True
+except ImportError:
+    pass
 def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not FPDF_AVAILABLE:
         return None
-
     pdf = FPDF()
     pdf.add_page()
 
-    # 配置中文支持（使用内置的支持中文的字体，无需额外文件）
+    # 中文支持（fpdf2内置，无需额外字体）
     pdf.add_font("SimHei", "", fname="", uni=True)
     pdf.set_font("SimHei", size=18)
-
-    # 标题（居中）
     pdf.cell(0, 20, "八字命理综合测算报告", ln=True, align='C')
     pdf.ln(8)
 
@@ -133,10 +121,9 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
     pdf.cell(0, 10, f"农历：{bazi_data['农历']}", ln=True)
     pdf.cell(0, 10, f"生肖：{bazi_data['生肖']}", ln=True)
     pdf.cell(0, 10, f"完整八字：{bazi_data['八字_str']}", ln=True)
-    pdf.cell(0, 10, f"日主：{bazi_data['日干']}({bazi_data['日干五行']})", ln=True)
     pdf.ln(8)
 
-    # AI解读（处理中文换行）
+    # AI解读
     pdf.set_font("SimHei", size=14)
     pdf.cell(0, 12, "二、AI深度解读", ln=True)
     pdf.ln(5)
@@ -145,7 +132,7 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
         if line.strip():
             pdf.multi_cell(0, 10, line)
 
-    # 风水布局（如果有）
+    # 风水布局
     if fengshui_content:
         pdf.ln(8)
         pdf.set_font("SimHei", size=14)
@@ -156,12 +143,11 @@ def generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content=""):
             if line.strip():
                 pdf.multi_cell(0, 10, line)
 
-    # 保存到内存
     bio = io.BytesIO()
     pdf.output(bio)
     bio.seek(0)
     return bio
-# ===================== 【修复版】导出按钮（自动判断库状态，零报错） =====================
+# ---------------------- 导出按钮（无冲突版） ----------------------
 if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     bazi_data = st.session_state.bazi_result
     gender = st.session_state.get("gender", "先生")
@@ -172,7 +158,7 @@ if "bazi_result" in st.session_state and "ai_result" in st.session_state:
     st.markdown("#### 📄 导出报告")
     col1, col2 = st.columns(2)
 
-    # 导出Word按钮
+    # 导出Word
     with col1:
         if DOCX_AVAILABLE:
             word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
@@ -186,7 +172,7 @@ if "bazi_result" in st.session_state and "ai_result" in st.session_state:
         else:
             st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
 
-    # 导出PDF按钮
+    # 导出PDF
     with col2:
         if FPDF_AVAILABLE:
             pdf_bytes = generate_pdf_doc(bazi_data, gender, ai_content, fengshui_content)
