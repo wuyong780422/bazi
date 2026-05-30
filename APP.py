@@ -1001,7 +1001,7 @@ if st.session_state.bottom_nav_active == "风水":
         st.warning("⚠️ 请先在排盘页完成排盘，再查看专属风水")
     else:
         r = st.session_state.bazi_result
-        gender = st.session_state.get(f"gender, {user_name}先生")
+        gender = st.session_state.get(f"{user_name}, 先生")
         shengxiao = r["生肖"]
         ri_gan = r["日干"]
         bazi_str = r["八字_str"]
