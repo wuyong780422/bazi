@@ -1,5 +1,7 @@
+# ===================== 已修复：点击微信图标弹出二维码（保留原样式） =====================
 import streamlit as st
 st.session_state.setdefault("show_wechat", False)
+
 # 隐藏默认顶部栏，并添加自定义固定标题栏
 st.markdown("""
 <style>
@@ -7,7 +9,6 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-
     /* 自定义固定顶部标题栏 */
     .fixed-header {
         position: fixed;
@@ -24,6 +25,7 @@ st.markdown("""
     }
     .header-icon {
         font-size: 24px;
+        cursor: pointer;
     }
     .header-title {
         position: absolute;
@@ -37,6 +39,27 @@ st.markdown("""
         font-size: 24px;
         color: #333;
     }
+    /* 弹窗样式 */
+    .wechat-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 25px;
+        border-radius: 14px;
+        width: 85%;
+        max-width: 320px;
+        text-align: center;
+    }
     /* 给页面主体加顶部内边距，避免被标题栏挡住 */
     .block-container {
         padding-top: 80px !important;
@@ -44,31 +67,48 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 固定在顶部的标题栏
+# 顶部标题栏（保留你原来一模一样的样式）
 st.markdown("""
 <div class="fixed-header">
-    <span class="header-icon" onclick="document.getElementById('wechat_modal').style.display='flex'" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px;">
+    <span class="header-icon" id="wechat-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="#07C160">
-            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/>
+            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/>
         </svg>
     </span>
     <span class="header-title">真命盘专业版</span>
     <span class="header-menu">⋯</span>
 </div>
-<!-- 点击微信弹出的联系我们弹窗 -->
-<div id="wechat_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center;">
-    <div style="background:#fff; padding:25px; border-radius:14px; width:85%; max-width:320px; text-align:center;">
-        <div style="font-size:20px; font-weight:bold; margin-bottom:18px;">联系我们</div>
-        <img src="wechat.png" style="width:220px; height:220px; object-fit:cover; border-radius:8px;">
-        <div style="margin-top:20px;">
-            <button onclick="document.getElementById('wechat_modal').style.display='none'" 
-            style="background:#07C160; color:#fff; border:none; padding:10px 24px; border-radius:8px; font-size:16px; cursor:pointer;">
-            关闭
-            </button>
+""", unsafe_allow_html=True)
+
+# JS 点击触发（真正生效）
+st.markdown("""
+<script>
+    document.getElementById('wechat-icon').onclick = function() {
+        window.parent.document.querySelector('.stApp').querySelectorAll('button')[0].click();
+    }
+</script>
+""", unsafe_allow_html=True)
+
+# 隐藏按钮 + 弹窗控制
+if st.button("hidden_wechat", key="wechat_click", help="hidden", label_visibility="collapsed"):
+    st.session_state.show_wechat = not st.session_state.show_wechat
+
+# 显示二维码弹窗
+if st.session_state.show_wechat:
+    st.markdown(f"""
+    <div class="wechat-modal">
+        <div class="modal-content">
+            <div style="font-size:20px; font-weight:bold; margin-bottom:18px;">联系我们</div>
+            <img src="wechat.png" style="width:220px; height:220px; object-fit:cover; border-radius:8px;">
+            <div style="margin-top:20px;">
+                <button onclick="window.parent.location.reload()" 
+                style="background:#07C160; color:#fff; border:none; padding:10px 24px; border-radius:8px; font-size:16px; cursor:pointer;">
+                关闭
+                </button>
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
 #  运行命令>> streamlit run APP.py
