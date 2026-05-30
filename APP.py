@@ -996,12 +996,11 @@ if st.session_state.bottom_nav_active == "吉日":
 if st.session_state.bottom_nav_active == "风水":
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属</h3></div>",
                 unsafe_allow_html=True)
-    user_name = st.session_state.get("name", "未知姓名")
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先在排盘页完成排盘，再查看专属风水")
     else:
         r = st.session_state.bazi_result
-        gender = st.session_state.get(f"{user_name}, 先生")
+        gender = st.session_state.get("gender", "先生")
         shengxiao = r["生肖"]
         ri_gan = r["日干"]
         bazi_str = r["八字_str"]
@@ -1055,7 +1054,9 @@ if st.session_state.bottom_nav_active == "风水":
         # ============== 显示风水结果 ==============
         fengshui_txt = get_fengshui_advice()
         st.markdown("---")
-        st.success(f"✅ {gender}｜{shengxiao}｜{bazi_str} 专属风水")
+        # 读取姓名
+        user_name = st.session_state.get("name", "命主")
+        st.success(f"✅ {user_name}{gender}｜{shengxiao}｜{bazi_str} 专属风水")
         st.markdown(fengshui_txt)
 # ===================== 最终版AI解读+导出Word/PDF =====================
 if st.session_state.bottom_nav_active == "解读":
