@@ -1,12 +1,14 @@
-# ===================== 最终版：顶部标题栏（图标完整+点击响应+零报错） =====================
+# ===================== 适配bazi子文件夹的零报错版：顶部标题栏 =====================
 import streamlit as st
 
-# 隐藏Streamlit默认顶部栏
+# 1. 强制隐藏所有平台元素（最高优先级，无冲突）
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* 强制隐藏所有Streamlit自带元素 */
+    #MainMenu, footer, header, .stDeployButton {
+        visibility: hidden !important;
+        display: none !important;
+    }
     /* 自定义固定顶部标题栏 */
     .fixed-header {
         position: fixed;
@@ -16,12 +18,13 @@ st.markdown("""
         background: white;
         padding: 10px 20px;
         border-bottom: 1px solid #eee;
-        z-index: 9999;
+        z-index: 99999;
         display: flex;
         align-items: center;
         justify-content: space-between;
         height: 60px;
     }
+    /* 微信图标容器：固定宽高+居中，保证不被裁剪 */
     .header-icon {
         width: 36px;
         height: 36px;
@@ -50,7 +53,7 @@ st.markdown("""
         width: 100%;
         height: 100%;
         background: rgba(0,0,0,0.7);
-        z-index: 99999;
+        z-index: 999999;
         display: none;
         align-items: center;
         justify-content: center;
@@ -69,19 +72,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 顶部标题栏（图标居中+完整显示）
+# 2. 顶部标题栏（图标完整显示，点击响应）
 st.markdown("""
 <div class="fixed-header">
-    <div class="header-icon" id="wechat_icon">
+    <div class="header-icon" onclick="document.getElementById('wechat_modal').style.display='flex'">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="#07C160">
             <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/>
-        </svg>
+    </svg>
     </div>
     <span class="header-title">真命盘专业版</span>
     <span class="header-menu">⋯</span>
 </div>
 
-<!-- 联系我们弹窗 -->
+<!-- 联系我们弹窗（图片路径适配bazi文件夹） -->
 <div id="wechat_modal" class="wechat-modal">
     <div class="modal-content">
         <h3>📞 联系我们</h3>
@@ -93,13 +96,6 @@ st.markdown("""
         </button>
     </div>
 </div>
-
-<!-- JS 点击事件绑定 -->
-<script>
-document.getElementById('wechat_icon').addEventListener('click', function(){
-    document.getElementById('wechat_modal').style.display = 'flex';
-});
-</script>
 """, unsafe_allow_html=True)
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
