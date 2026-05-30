@@ -2,7 +2,6 @@
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
 #  运行命令>> streamlit run APP.py
 # ==========================================================
-import streamlit as st
 import os
 import sys
 import requests
@@ -62,8 +61,6 @@ try:
     DOCX_AVAILABLE = True
 except ImportError:
     pass
-
-
 def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     if not DOCX_AVAILABLE:
         return None
@@ -93,28 +90,6 @@ def generate_word_doc(bazi_data, gender, ai_content, fengshui_content=""):
     bio.seek(0)
     return bio
 
-
-# ---------------------- 导出按钮（仅保留Word，界面清爽） ----------------------
-if "bazi_result" in st.session_state and "ai_result" in st.session_state:
-    bazi_data = st.session_state.bazi_result
-    gender = st.session_state.get("gender", "先生")
-    ai_content = st.session_state.ai_result
-    fengshui_content = st.session_state.get("fengshui_result", "")
-
-    st.markdown("---")
-    st.markdown("#### 📄 导出报告")
-    # 只显示Word按钮，去掉PDF相关内容
-    if DOCX_AVAILABLE:
-        word_bytes = generate_word_doc(bazi_data, gender, ai_content, fengshui_content)
-        st.download_button(
-            label="📄 导出Word",
-            data=word_bytes,
-            file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            use_container_width=True
-        )
-    else:
-        st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
 # ===================== 天干五行辅助函数（补回bazi_result['日干五行']专用） =====================
 def get_gan_wuxing(gan: str) -> str:
     """
@@ -1141,26 +1116,37 @@ if st.session_state.bottom_nav_active == "解读":
                     st.markdown("---")
                     st.success("✅ AI深度解读完成")
                     st.markdown(ai_result)
+                    st.rerun()  # 解读完成后强制刷新，避免重执行时重复渲染
                 except Exception as e:
                     st.error(f"❌ 解读失败：{str(e)}")
-        # ===================== 【修复版】导出按钮：自动判断库是否安装 =====================
+        # ===================== 【正确版】只在解读页显示导出，不跑顶 =====================
         if "ai_result" in st.session_state and st.session_state.ai_result:
             st.markdown("---")
             st.markdown("#### 📄 导出报告")
-            # 👇 只留1列，删掉col2
-            with st.container():
-                if Document is not None:
-                    word_file = generate_word_doc(bazi_data, gender, st.session_state.ai_result)
-                    st.download_button(
-                        label="📄 导出Word",
-                        data=word_file,
-                        file_name=f"八字解读报告_{datetime.now().strftime('%Y%m%d%H%M%S')}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True,
-                        key = "download_word_report"  # 这里写一个唯一的字符串即可
-                    )
-                else:
-                    st.button("📄 导出Word（未安装库）", disabled=True, use_container_width=True)
+
+            if DOCX_AVAILABLE:
+                # 读取姓名
+                user_name = st.session_state.get("name", "未知姓名")
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                file_name = f"{user_name}_八字解读报告_{timestamp}.docx"
+
+                word_bytes = generate_word_doc(
+                    bazi_data,
+                    gender,
+                    st.session_state.ai_result,
+                    st.session_state.get("fengshui_result", "")
+                )
+
+                st.download_button(
+                    label="📄 导出Word",
+                    data=word_bytes,
+                    file_name=file_name,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key="download_word_report"  # 解决重复ID报错
+                )
+            else:
+                st.button("📄 导出Word（未安装python-docx）", disabled=True, use_container_width=True)
 # ========= 【底部固定悬浮导航栏】只负责跟随状态变色，纯视觉层 =========
 st.markdown("<div style='height:90px;'></div>",unsafe_allow_html=True)
 act = st.session_state.bottom_nav_active
