@@ -836,7 +836,7 @@ if st.session_state.bottom_nav_active == "吉日":
                 st.write(f"{i + 1}. {item['八字_str']}")
 
     # ===================== 核心：验证指定公历吉日（仅公历） =====================
-    if check_mode == "验证指定公历吉日":
+    if check_mode == "验证*公历吉日":
         st.markdown("---")
         st.markdown("🔍 验证指定公历日期是否为吉日")
         # 日期选择器（仅公历）
@@ -1369,3 +1369,5 @@ st.markdown(f"""
     <div class="nav-item" style="{s7}"></div>
 </div>
 """,unsafe_allow_html=True)
+
+
