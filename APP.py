@@ -19,15 +19,21 @@ st.markdown("""
         z-index: 9999;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
     }
     .header-icon {
         font-size: 24px;
-        margin-right: 10px;
     }
     .header-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         font-size: 22px;
         font-weight: bold;
+        color: #333;
+    }
+    .header-menu {
+        font-size: 24px;
         color: #333;
     }
     /* 给页面主体加顶部内边距，避免被标题栏挡住 */
@@ -42,6 +48,7 @@ st.markdown("""
 <div class="fixed-header">
     <span class="header-icon">☯️</span>
     <span class="header-title">真命盘专业版</span>
+    <span class="header-menu">⋯</span>
 </div>
 """, unsafe_allow_html=True)
 # ==========================================================
