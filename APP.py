@@ -230,7 +230,7 @@ if "bottom_nav_active" not in st.session_state:
 with st.container(border=True):
     col_name_label, col_name_input = st.columns([1, 4])
     with col_name_label: st.markdown("**姓名**")
-    with col_name_input: name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed")
+    with col_name_input: name = st.text_input("", placeholder="请输入姓名", label_visibility="collapsed",key="name" )
 
     # 优化点：性别和历法放在同一行两列，和性别一样一行显示
     col_gender, col_cal = st.columns(2)
@@ -789,7 +789,7 @@ if st.session_state.bottom_nav_active == "吉日":
 
     r = st.session_state.bazi_result
     # ===================== 新增：模式切换（查询吉日 / 验证公历吉日） =====================
-    check_mode = st.radio("", ["查询5年内吉日", "验证指定公历吉日"], horizontal=True, label_visibility="collapsed")
+    check_mode = st.radio("", ["查询5年内吉日", "验证*公历吉日"], horizontal=True, label_visibility="collapsed")
 
     jiri_type = st.radio(
         "", ["开业择日", "出行择日", "上任择日", "祈福择日", "修灶择日", "财门择日",
@@ -1317,7 +1317,7 @@ if st.session_state.bottom_nav_active == "解读":
 
             if DOCX_AVAILABLE:
                 # 读取姓名
-                user_name = st.session_state.get("name", "未知姓名")
+                user_name = st.session_state.get("name", "命主")
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name = f"{user_name}_八字解读报告_{timestamp}.docx"
 
@@ -1369,5 +1369,3 @@ st.markdown(f"""
     <div class="nav-item" style="{s7}"></div>
 </div>
 """,unsafe_allow_html=True)
-
-
