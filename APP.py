@@ -1,12 +1,14 @@
-# ===================== 最终版：顶部标题栏（图标完整+点击响应+零报错） =====================
+# ===================== 终极修复版：全隐藏+图标完整+点击响应 =====================
 import streamlit as st
 
-# 隐藏Streamlit默认顶部栏
+# 1. 先强制隐藏所有平台元素（最高优先级）
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* 强制隐藏所有Streamlit自带元素，最高优先级 */
+    #MainMenu, footer, header, .stDeployButton, .st-emotion-cache-18ni7ap, .st-emotion-cache-1p3m07s {
+        visibility: hidden !important;
+        display: none !important;
+    }
     /* 自定义固定顶部标题栏 */
     .fixed-header {
         position: fixed;
@@ -16,12 +18,13 @@ st.markdown("""
         background: white;
         padding: 10px 20px;
         border-bottom: 1px solid #eee;
-        z-index: 9999;
+        z-index: 99999;
         display: flex;
         align-items: center;
         justify-content: space-between;
         height: 60px;
     }
+    /* 微信图标容器：固定宽高+居中，保证不被裁剪 */
     .header-icon {
         width: 36px;
         height: 36px;
@@ -29,6 +32,8 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        padding: 0;
+        margin: 0;
     }
     .header-title {
         position: absolute;
@@ -50,7 +55,7 @@ st.markdown("""
         width: 100%;
         height: 100%;
         background: rgba(0,0,0,0.7);
-        z-index: 99999;
+        z-index: 999999;
         display: none;
         align-items: center;
         justify-content: center;
@@ -69,7 +74,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 顶部标题栏（图标居中+完整显示）
+# 2. 顶部标题栏（图标完整显示）
 st.markdown("""
 <div class="fixed-header">
     <div class="header-icon" id="wechat_icon">
@@ -94,12 +99,31 @@ st.markdown("""
     </div>
 </div>
 
-<!-- JS 点击事件绑定 -->
-<script>
-document.getElementById('wechat_icon').addEventListener('click', function(){
-    document.getElementById('wechat_modal').style.display = 'flex';
-});
-</script>
+<!-- 3. 用Streamlit的组件绑定点击事件，避免JS被拦截 -->
+""", unsafe_allow_html=True)
+
+# 隐藏的按钮，用于控制弹窗显示
+with st.container():
+    if st.button("📱", key="wechat_toggle", help="联系我们", label_visibility="collapsed"):
+        st.markdown("""
+        <script>
+            document.getElementById('wechat_modal').style.display = 'flex';
+        </script>
+        """, unsafe_allow_html=True)
+
+# 把按钮放到微信图标位置，用绝对定位盖住图标，实现“点击图标=点击按钮”
+st.markdown("""
+<style>
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) > div {
+        position: fixed;
+        top: 10px;
+        left: 20px;
+        width: 36px;
+        height: 36px;
+        z-index: 100000;
+        opacity: 0;
+    }
+</style>
 """, unsafe_allow_html=True)
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
