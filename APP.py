@@ -1307,7 +1307,6 @@ if st.session_state.bottom_nav_active == "解读":
                     st.markdown("---")
                     st.success("✅ AI深度解读完成")
                     st.markdown(ai_result)
-                    st.rerun()  # 解读完成后强制刷新，避免重执行时重复渲染
                 except Exception as e:
                     st.error(f"❌ 解读失败：{str(e)}")
         # ===================== 【正确版】只在解读页显示导出，不跑顶 =====================
