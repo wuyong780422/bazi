@@ -1,54 +1,49 @@
 import streamlit as st
-
-# 必须是第一个 Streamlit 命令
-st.set_page_config(
-    page_title="真命盘专业版",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# 完整隐藏所有 Streamlit 元素的 CSS
-hide_streamlit_style = """
+# 隐藏默认顶部栏，并添加自定义固定标题栏
+st.markdown("""
 <style>
-/* 隐藏顶部标题栏（含标题和URL） */
-header[data-testid="stHeader"] {
-    display: none !important;
-}
+    /* 隐藏Streamlit默认顶部栏 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 
-/* 隐藏右上角的 Fork、GitHub 图标和三点菜单 */
-div.stAppToolbar, .stDeployButton, .viewerBadge_container__1QSob,
-div[data-testid="stToolbar"] {
-    display: none !important;
-}
-
-/* 隐藏侧边栏的展开按钮 */
-button[kind="header"] {
-    display: none !important;
-}
-
-/* 隐藏底部 "Made with Streamlit" 文字 */
-footer {
-    visibility: hidden !important;
-}
-
-/* 隐藏顶部彩色进度条 */
-#stDecoration {
-    display: none !important;
-}
-
-/* 隐藏页面内的多余空白 */
-div[data-testid="stAppViewContainer"] {
-    padding-top: 0rem;
-}
-div[data-testid="stVerticalBlock"] {
-    padding-top: 1rem;
-}
+    /* 自定义固定顶部标题栏 */
+    .fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        padding: 12px 20px;
+        border-bottom: 1px solid #eee;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .header-icon {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    .header-title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #333;
+    }
+    /* 给页面主体加顶部内边距，避免被标题栏挡住 */
+    .block-container {
+        padding-top: 80px !important;
+    }
 </style>
-"""
+""", unsafe_allow_html=True)
 
-# 注入 CSS
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
+# 固定在顶部的标题栏
+st.markdown("""
+<div class="fixed-header">
+    <span class="header-icon">☯️</span>
+    <span class="header-title">真命盘专业版</span>
+</div>
+""", unsafe_allow_html=True)
 # ==========================================================
 # 真命盘专业版 —— 固定顶部标题+全功能原版+手机端历法一行优化版
 #  运行命令>> streamlit run APP.py
