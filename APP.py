@@ -165,22 +165,6 @@ def get_gan_wuxing(gan: str) -> str:
         return "水"
     else:
         return ""
-# ===================== AI解读专用配置（火山方舟·豆包） =====================
-# 1. 先导入OpenAI客户端（火山方舟兼容OpenAI格式）
-from openai import OpenAI
-
-# 2. 豆包API配置
-# 读取 Streamlit Secrets 里的火山方舟 API Key
-api_key = st.secrets["DOUBAO_API_KEY"]
-
-DOUBAO_CONFIG = {
-    "api_key": api_key,
-    "base_url": "https://ark.cn-beijing.volces.com/api/v3",
-    "model": "doubao-lite-4k",
-    "timeout": 70,
-    "temperature": 0.7,
-    "max_tokens": 2800
-}
 # ===================== 数据库函数（100% 复制 APP0 正确版） =====================
 def query_db_ganzhi(solar_date_str: str) -> tuple[str, str, str]:
     try:
@@ -1160,27 +1144,24 @@ else:
         st.success(f"✅ {user_name}{gender}｜{shengxiao}｜{bazi_str} 专属风水")
         st.markdown(fengshui_txt)
 
-# ===================== 解读页面（互斥控制） =====================
-if st.session_state.bottom_nav_active != "解读":
-    pass
-else:
+# ===================== 火山方舟·豆包AI解读 =====================
+if st.session_state.bottom_nav_active == "解读":
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🤖 AI深度命理解读</h3></div>", unsafe_allow_html=True)
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先在排盘页完成排盘，再使用AI解读")
     else:
         bazi_data = st.session_state.bazi_result
         gender = st.session_state.get("gender", "先生")
-        fengshui_txt = ""
         if st.button("🚀 开始深度解读", use_container_width=True):
             with st.spinner("🤖 AI正在深度分析中...\n⏳ 预计5-15秒，请不要重复点击"):
                 try:
-                    prompt = f"""你是专业子平八字命理师，按以下结构生成**专业版报告**，严格输出，不要客套话：
+                    prompt = f"""你是专业子平八字命理师，按以下结构生成专业版报告：
 【一、命局本质】
 八字：{bazi_data['八字_str']}，性别{gender}，日主{bazi_data['日干']}({bazi_data['日干五行']})，
 生肖：{bazi_data['生肖']}，五行统计：{bazi_data['五行']}
 用生活化比喻总结命局。
 【二、寿缘与关键风险年份】
-1. 寿缘参考（命理推导，非绝对）:结合八字五行平衡、用神力量、大运走势，推算并明确给出最长寿缘期望参考值（必须是具体年龄范围，如88-95岁）
+1. 寿缘参考（命理推导，非绝对）
 2. 5个关键风险年份：最近的关键风险年份
 3. 每一年注意事项
 【三、事业细分】
@@ -1200,29 +1181,29 @@ else:
 涉及具体的年份要备注（如丙午年（2026）
 【八、风水与化解】
 吉方位、吉颜色、饰品、布局建议
-要求：语言专业、简练、命理师风格，不要符号,禁止出现任何星号（*）和井号（#）、不要标题格式,所有内容基于八字核心数据（空亡、地支互动、用忌神等），不空谈。
+语言专业、简练、命理师风格，不要符号，禁止出现任何星号（*）和井号（#）、不要标题格式。
 """
-                    # 初始化豆包客户端
-                    client = OpenAI(
-                        api_key=DOUBAO_CONFIG["api_key"],
-                        base_url=DOUBAO_CONFIG["base_url"],
-                    )
 
-                    # 调用豆包接口
-                    response = client.chat.completions.create(
-                        model=DOUBAO_CONFIG["model"],
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=DOUBAO_CONFIG["temperature"],
-                        max_tokens=DOUBAO_CONFIG["max_tokens"],
-                        timeout=DOUBAO_CONFIG["timeout"]
+                    # 仅保留这里的调用代码
+                    from openai import OpenAI
+                    client = OpenAI(
+                        api_key="26ac39c4-a951-418a-abfe-2059e5a8c5ac",
+                        base_url="https://ark.cn-beijing.volces.com/api/v3",
                     )
-                    ai_result = response.choices[0].message.content.strip()
+                    response = client.chat.completions.create(
+                        model="doubao-lite-4k",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.7,
+                    )
+                    ai_result = response.choices[0].message.strip()
+
                     st.session_state.ai_result = ai_result
                     st.markdown("---")
                     st.success("✅ AI深度解读完成")
                     st.markdown(ai_result)
                 except Exception as e:
                     st.error(f"❌ 解读失败：{str(e)}")
+
         if "ai_result" in st.session_state and st.session_state.ai_result:
             st.markdown("---")
             st.markdown("#### 📄 导出报告")
