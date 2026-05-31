@@ -170,7 +170,7 @@ def get_gan_wuxing(gan: str) -> str:
 from openai import OpenAI
 
 # 2. 豆包API配置
-# 读取 Streamlit Secrets 里的密钥
+# 读取 Streamlit Secrets 里的火山方舟 API Key
 api_key = st.secrets["DOUBAO_API_KEY"]
 
 DOUBAO_CONFIG = {
