@@ -165,16 +165,19 @@ def get_gan_wuxing(gan: str) -> str:
         return "水"
     else:
         return ""
-# ===================== AI解读专用配置（和PC端完全一致） =====================
-DEEPSEEK_CONFIG = {
-    "api_key": "sk-d3b976c41272460eab55726001606b15",
-    "api_url": "https://api.deepseek.com/v1/chat/completions",
-    "model": "deepseek-chat",
+# ===================== AI解读专用配置（火山方舟·豆包） =====================
+# 1. 先导入OpenAI客户端（火山方舟兼容OpenAI格式）
+from openai import OpenAI
+
+# 2. 豆包API配置
+DOUBAO_CONFIG = {
+    "api_key": "WTJNME5qTXdORGd4TkdJNE5EQTNZemcwTXpCaE9XTTNOek5sTkRRek1qaw==",  # 填你Excel里的密钥
+    "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+    "model": "doubao-lite-4k",
     "timeout": 70,
     "temperature": 0.7,
     "max_tokens": 2800
-}
-# ===================== 数据库函数（100% 复制 APP0 正确版） =====================
+}# ===================== 数据库函数（100% 复制 APP0 正确版） =====================
 def query_db_ganzhi(solar_date_str: str) -> tuple[str, str, str]:
     try:
         conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
@@ -424,9 +427,9 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
 # ===================== 完整Tabs模块（修复底部高亮同步） =====================
 st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘合盘", "☯️ 排盘", "⏱️ 吉日", "🏮 风水", "📄 解读", "📜 说明书"])
+
 with tab1:
     d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
-
     # 【新增】查询完整黄历数据（五行、廿八宿、星期、十二宫辰、红砂）
     def get_full_calendar_data(solar_date_str: str):
         try:
@@ -447,16 +450,14 @@ with tab1:
                     "红砂": row[4] if row[4] and row[4].strip() else "否"
                 }
             else:
-                return {"五行":"","星期":"","廿八宿":"","十二宫辰":"","红砂":"否"}
+                return {"五行":"","星期":"","廿八宿":"","廿八宿":"","十二宫辰":"","红砂":"否"}
         except Exception:
             return {"五行":"","星期":"","廿八宿":"","十二宫辰":"","红砂":"否"}
-
     if st.button("查询万年历"):
         s = d.strftime("%Y-%m-%d")
         lu = solar_to_lunar_from_db(s)
         n, y, r = query_db_ganzhi(s)
         cal = get_full_calendar_data(s)
-
         st.write(f"📅 公历：{s}")
         st.write(f"📅 农历：{lu['农历完整信息']}")
         st.write(f"📅 星期：{cal['星期']}　🐉 生肖：{lu['生肖']}")
@@ -468,13 +469,11 @@ with tab2:
         r = st.session_state.bazi_result
         ri_gan = r["日干"]
         w = r["五行"]
-
         # ===================== 显示姓名 + 性别 =====================
         # 读取顶部输入的姓名、性别
         show_name = name if name.strip() != "" else "命主"
         show_title = f"{show_name}{gender}"
         st.markdown(f"####    {show_title} · 八字财运")
-
         # ===================== 【传统正宗】按日主取财 =====================
         cai_wuxing = ""
         cai_name = ""
@@ -493,9 +492,7 @@ with tab2:
         elif ri_gan in ("壬", "癸"):
             cai_wuxing = "火"
             cai_name = "火财（水克火为财）"
-
         cai_num = w[cai_wuxing]
-
         # 财星旺衰
         if cai_num >= 3:
             cai_status = "财星极旺"
@@ -505,7 +502,6 @@ with tab2:
             cai_status = "财星偏弱"
         else:
             cai_status = "财星微弱"
-
         st.markdown(f"**日主**：{ri_gan}")
         st.markdown(f"**你的财星**：{cai_name}")
         st.markdown(f"**财星数量**：{cai_num} 个")
@@ -520,11 +516,9 @@ with tab2:
 with tab3:
     st.markdown("<div style='text-align:center;'><h3>💞 婚恋八字合盘</h3></div>", unsafe_allow_html=True)
     st.markdown("💡 使用方法：排盘 → 添加到合盘列表 → 开始合盘")
-
     # 1. 初始化合盘列表
     if "hepan_list" not in st.session_state:
         st.session_state.hepan_list = []
-
     # 2. 按钮区域：添加、清空、开始合盘
     col_add, col_clear, col_start = st.columns(3)
     with col_add:
@@ -545,7 +539,6 @@ with tab3:
             if len(st.session_state.hepan_list) != 2:
                 st.warning("请添加恰好 2 个八字")
                 st.stop()
-
             # 3. 取出两人八字（逻辑完全不变）
             a_data = st.session_state.hepan_list[0]
             b_data = st.session_state.hepan_list[1]
@@ -559,7 +552,6 @@ with tab3:
             b_wx = b_data["五行"]
             score = 0
             items = []
-
             # ========== 以下合盘运算逻辑 100% 保持你原来的不变 ==========
             def get_zhi_relation(zhi1, zhi2):
                 liuhe = ["子丑","寅亥","卯戌","辰酉","巳申","午未"]
@@ -592,7 +584,6 @@ with tab3:
                     return "土" if ri_gan in "甲乙" else "金" if ri_gan in "丙丁" else "水" if ri_gan in "戊己" else "木" if ri_gan in "庚辛" else "火"
                 else:
                     return "火" if ri_gan in "甲乙" else "土" if ri_gan in "丙丁" else "金" if ri_gan in "戊己" else "水" if ri_gan in "庚辛" else "火"
-
             # 生肖关系
             zhi_rel = get_zhi_relation(a_nian[1], b_nian[1])
             if zhi_rel == "六合":
@@ -603,7 +594,6 @@ with tab3:
                 score -=5; items.append("生肖六害｜暗耗 -5")
             else:
                 score +=5; items.append("生肖平和 +5")
-
             # 夫妻宫
             fg_rel = get_zhi_relation(a_ri[1], b_ri[1])
             if fg_rel == "六合":
@@ -614,7 +604,6 @@ with tab3:
                 score -=10; items.append("夫妻宫六害｜内耗 -10")
             else:
                 score +=8; items.append("夫妻宫平和 +8")
-
             # 日主
             if tian_gan_he(a_rg, b_rg):
                 score +=18; items.append("日主天干相合｜情投意合 +18")
@@ -628,7 +617,6 @@ with tab3:
                     score -=8; items.append(f"日主相克｜摩擦 -8")
                 else:
                     score +=4; items.append("日主五行相同 +4")
-
             # 五行互补
             hubu = 0
             for x in ["金","木","水","火","土"]:
@@ -636,7 +624,6 @@ with tab3:
                     hubu +=1
             score += hubu*6
             items.append(f"五行互补 {hubu}/5 项 +{hubu*6}")
-
             # 夫妻星
             a_star = get_spouse_star(a_rg, "先生")
             b_star = get_spouse_star(b_rg, "女士")
@@ -646,7 +633,6 @@ with tab3:
                 score +=15; items.append("夫妻星皆有｜婚配佳 +15")
             else:
                 items.append("夫妻星偏弱")
-
             # 总分等级
             score = max(score, 0)
             score = min(score, 100)
@@ -658,7 +644,6 @@ with tab3:
                 level="中等婚配｜可长久"; color="#ffc107"
             else:
                 level="普通婚配｜多包容"; color="#dc3545"
-
             # 输出结果
             st.markdown("---")
             st.markdown(f"**A方**: {a_data['八字_str']}")
@@ -667,7 +652,6 @@ with tab3:
             st.markdown("#### 评分明细")
             for txt in items:
                 st.markdown(f"- {txt}")
-
     # 显示已添加的八字列表
     if st.session_state.get("hepan_list"):
         st.markdown("---")
@@ -678,7 +662,6 @@ with tab4:
     # st.markdown("#### 多盘合盘")
     if "duopan_list" not in st.session_state:
         st.session_state.duopan_list = []
-
     col_btn_add, col_btn_clear, col_btn_compare = st.columns(3)
     with col_btn_add:
         if st.button("添加当前八字", use_container_width=True):
@@ -698,17 +681,14 @@ with tab4:
                 all_wuxing = []
                 all_rigan = []
                 total_count = len(st.session_state.duopan_list)
-
                 for d in st.session_state.duopan_list:
                     all_wuxing.append(d["五行"])
                     all_rigan.append(d["日干"])
-
                 # 1. 计算五行总和、平均值
                 sum_wuxing = {"金":0,"木":0,"水":0,"火":0,"土":0}
                 avg_wuxing = {"金":0.0,"木":0.0,"水":0.0,"火":0.0,"土":0.0}
                 min_wuxing = {"金":99,"木":99,"水":99,"火":99,"土":99}
                 max_wuxing = {"金":0,"木":0,"水":0,"火":0,"土":0}
-
                 for wd in all_wuxing:
                     for k in sum_wuxing:
                         sum_wuxing[k] += wd[k]
@@ -716,17 +696,14 @@ with tab4:
                             min_wuxing[k] = wd[k]
                         if wd[k] > max_wuxing[k]:
                             max_wuxing[k] = wd[k]
-
                 for k in sum_wuxing:
                     avg_wuxing[k] = sum_wuxing[k] / total_count
-
                 # 2. 找最旺、最弱五行
                 sorted_wuxing = sorted(avg_wuxing.items(), key=lambda x:x[1], reverse=True)
                 top1 = sorted_wuxing[0][0]
                 top2 = sorted_wuxing[1][0]
                 low1 = sorted_wuxing[-1][0]
                 low2 = sorted_wuxing[-2][0]
-
                 # 3. 群体整体判断
                 total_score = sum(sum_wuxing.values())
                 avg_per = total_score / total_count
@@ -736,7 +713,6 @@ with tab4:
                     group_type = "整体偏弱｜温和内敛、易劳累"
                 else:
                     group_type = "五行均衡｜稳定协调、适配性强"
-
                 # 4. 适合行业
                 industry_map = {
                     "木":"教育、文化、创意、医疗",
@@ -747,7 +723,6 @@ with tab4:
                 }
                 best_industry = industry_map.get(top1, "")
                 need_industry = industry_map.get(low1, "")
-
                 # =============== 展示结果 ===============
                 st.markdown("---")
                 st.success(f"✅ 群体分析完成｜共 {total_count} 个命盘")
@@ -755,12 +730,11 @@ with tab4:
                 st.markdown(f"**🔥 最旺五行**：{top1}、{top2}")
                 st.markdown(f"**💧 最弱/最缺五行**：{low1}、{low2}")
                 st.markdown(f"**📌 群体适合行业**：{best_industry}")
-                st.markdown(f"**📌 建议补充五行**：{need_industry}")
+                st.markdown(f"📌 建议补充五行：{need_industry}")
                 st.markdown("---")
                 st.markdown("#### 五行详细数据")
                 for k in ["金","木","水","火","土"]:
                     st.markdown(f"**{k}**：均值 {avg_wuxing[k]:.1f}　范围 {min_wuxing[k]} ~ {max_wuxing[k]}")
-
     # 显示已添加列表
     if st.session_state.duopan_list:
         st.markdown("---")
@@ -772,22 +746,18 @@ with tab4:
 with tab5:
     if st.button("排盘首页",use_container_width=True):
         st.session_state.bottom_nav_active = "排盘"
-        # 这里执行排盘功能代码
         st.rerun()
 with tab6:
     if st.button("查询吉日",use_container_width=True):
         st.session_state.bottom_nav_active = "吉日"
-        # 这里执行吉日功能代码
         st.rerun()
 with tab7:
     if st.button("查询风水",use_container_width=True):
         st.session_state.bottom_nav_active = "风水"
-        # 这里执行风水功能代码
         st.rerun()
 with tab8:
     if st.button("deepseek 八 字 解 读",use_container_width=True):
         st.session_state.bottom_nav_active = "解读"
-        # 这里执行解读功能代码
         st.rerun()
 with tab9:
     st.markdown("<div style='text-align:center; margin-top:10px;'><h3>📜 真命盘说明书</h3></div>", unsafe_allow_html=True)
@@ -795,73 +765,61 @@ with tab9:
     st.markdown("""
 ### 一、开发作者简介
 吴勇，计算机网络高级工程师、网络信息安全高级技师、省级名师工作室成员、省级优秀指导教师、高级双师型教师。爱好计算机编程与传统文化数字化领域，擅长将正统民俗命理逻辑与软件工程规范结合，打造严谨、稳定、易用的命理工具系统。
-
 ### 二、真命盘系统介绍
 真命盘是一套基于正统子平八字 + 传统黄历的命理数字化系统。系统以权威万年历数据库为核心，不做任何自定义命理推算，所有干支、神煞、吉凶均取自预制黄历数据，严格遵循传统命理规则，实现：八字排盘、专业择日、八字合盘、多盘合盘、民俗风水、AI 深度解读、报告导出七大核心功能。系统特点：纯数据库读取、无运算误差、逻辑严谨、界面简洁、PC / 移动端无缝互通，适合命理学习、民俗参考、日常择吉使用。
-
 ### 三、择日功能介绍
 真命盘择日功能严格遵循传统择吉文化 “先避凶、后趋吉” 的核心思维，以正统黄历数据为依据，层层筛查，确保所选日子符合民俗规范。
-
 #### 1. 核心筛查逻辑
 第一步：避大凶（红砂日）
 传统民俗 “红砂岀，百事忌”，系统直接读取数据库红砂字段，自动排除所有红砂凶日。
-
 第二步：避冲煞
 读取日干支，排除冲命主生肖、冲命主日柱的日子，确保不与自身命格相冲。
-
 第三步：避杂煞
 排除四离四绝、三娘煞、月破日等传统大忌日子，气场紊乱之日不做大事。
-
 第四步：选黄道
 仅保留青龙、明堂、金匮、天德、玉堂、司命六大黄道吉日。
-
 第五步：事项匹配
 按事项匹配日支：
 开业 / 出行：寅申巳亥日
 嫁娶 / 订婚：子午卯酉日
 入宅 / 动土：辰戌丑未日
 安葬：子丑辰未申酉日
-
 第六步：多人适配
 嫁娶 / 订婚限 2 人，入宅 / 动工支持多人，不冲任何参与者，支持双胞胎相同排盘。
-
 #### 2. 分级结果
 太阳吉日：最高等级，带太阳星吉时
 完美吉日：带吉神加持
 平安吉日：基础可用吉日
-
 #### 3. 产品优势
 纯数据库：无推算、无误差，结果稳定
 民俗正统：完全贴合传统择日思维
 场景完善：覆盖 12 类常用事项。
-
 **特别提醒**：命理分析仅为传统文化趣味解读，人生走向取决于个人努力与选择，请理性看待，勿盲从迷信！
 """)
-# ===================== APP.py 终极修复：支持双胞胎+嫁娶限2人+对齐main + 新增验证吉日 =====================
-if st.session_state.bottom_nav_active == "吉日":
+
+# ===================== 【核心互斥修复】只渲染当前底部导航页面，其他全部不显示 =====================
+if st.session_state.bottom_nav_active != "吉日":
+    # 非吉日页面，不渲染吉日内容
+    pass
+else:
+    # 原版吉日代码完整保留
     st.markdown("<div style='text-align:center;margin-top:20px;'><h3>📅 专业择日系统</h3></div>", unsafe_allow_html=True)
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先排盘再查询吉日")
         st.stop()
-
     r = st.session_state.bazi_result
-    # ===================== 新增：模式切换（查询吉日 / 验证公历吉日） =====================
     check_mode = st.radio("", ["查询5年内吉日", "验证*公历吉日"], horizontal=True, label_visibility="collapsed")
-
     jiri_type = st.radio(
         "", ["开业择日", "出行择日", "上任择日", "祈福择日", "修灶择日", "财门择日",
              "嫁娶择日", "订婚择日", "入宅择日", "动工择日", "动土择日", "安葬择日"],
         horizontal=True, label_visibility="collapsed"
     )
-    # 严格分类
     single_types = ["开业择日", "出行择日", "上任择日", "祈福择日", "修灶择日", "财门择日"]
-    double_types = ["嫁娶择日", "订婚择日"]  # 限2人
+    double_types = ["嫁娶择日", "订婚择日"]
     multi_types = ["入宅择日", "动工择日", "动土择日", "安葬择日"]
     is_single = jiri_type in single_types
     is_double = jiri_type in double_types
     is_multi = jiri_type in multi_types
-
-    # 双人/多人界面（原有逻辑不变）
     if not is_single:
         st.markdown("---")
         if is_double:
@@ -886,103 +844,59 @@ if st.session_state.bottom_nav_active == "吉日":
             if st.button("🧹 清空列表", use_container_width=True):
                 st.session_state.jiri_list = []
                 st.success("🗑️ 已清空")
-        # 显示列表
         if st.session_state.get("jiri_list"):
             st.markdown("**📋 参与择日八字**")
             for i, item in enumerate(st.session_state.jiri_list):
                 st.write(f"{i + 1}. {item['八字_str']}")
-
-    # ===================== 核心：验证指定公历吉日（仅公历） =====================
     if check_mode == "验证*公历吉日":
         st.markdown("---")
         st.markdown("🔍 验证指定公历日期是否为吉日")
-        # 日期选择器（仅公历）
         check_date = st.date_input("请输入要验证的公历日期", datetime.now(),
                                    min_value=datetime(1900, 1, 1),
                                    max_value=datetime(2100, 12, 31),
                                    label_visibility="collapsed")
         check_date_str = check_date.strftime("%Y-%m-%d")
-
-        # 验证按钮
         if st.button("✅ 开始验证吉日", use_container_width=True):
             with st.spinner("正在验证中..."):
-                # 原有常量（完全复用）
-                chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥", "午": "子",
-                             "未": "丑", "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
-                sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳", "马": "午",
-                          "羊": "未", "猴": "申", "鸡": "酉", "狗": "戌", "猪": "亥"}
+                chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥", "午": "子", "未": "丑", "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
+                sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳", "马": "午", "羊": "未", "猴": "申", "鸡": "酉", "狗": "戌", "猪": "亥"}
                 sili_jue = [(3, 20), (6, 21), (9, 23), (12, 22), (2, 4), (5, 6), (8, 8), (11, 8)]
                 sanniang = [3, 7, 13, 18, 22, 27]
                 sun_star_table = {
-                    "甲子": ([6, 15, 24], "未"), "乙丑": ([1, 10, 19, 28], "申"), "丙寅": ([1, 10, 19, 28], "辰"),
-                    "丁卯": ([8, 17, 28], "申"),
-                    "戊辰": ([1, 10, 19, 28], "卯"), "己巳": ([1, 10, 19, 28], "未"), "庚午": ([5, 14, 23], "申"),
-                    "辛未": ([6, 15, 24], "辰"),
-                    "壬申": ([5, 14, 23], "申"), "癸酉": ([9, 18, 27], "卯"), "甲戌": ([7, 16, 25], "未"),
-                    "乙亥": ([4, 13, 22], "申"),
-                    "丙子": ([9, 18, 27], "辰"), "丁丑": ([3, 12, 21, 30], "申"), "戊寅": ([3, 12, 21, 30], "卯"),
-                    "己卯": ([8, 17, 28], "未"),
-                    "庚辰": ([1, 10, 19, 28], "申"), "辛巳": ([1, 10, 19, 28], "辰"), "壬午": ([6, 15, 24], "申"),
-                    "癸未": ([5, 14, 23], "卯"),
-                    "甲申": ([5, 14, 23], "未"), "乙酉": ([2, 11, 20, 29], "申"), "丙戌": ([4, 13, 22], "辰"),
-                    "丁亥": ([7, 16, 25], "申"),
-                    "戊子": ([2, 11, 20, 29], "卯"), "己丑": ([3, 12, 21, 30], "未"), "庚寅": ([8, 17, 28], "申"),
-                    "辛卯": ([3, 12, 21, 30], "辰"),
-                    "壬辰": ([3, 12, 21, 30], "申"), "癸巳": ([3, 12, 21, 30], "卯"), "甲午": ([2, 11, 20, 29], "未"),
-                    "乙未": ([4, 13, 22], "申"),
-                    "丙申": ([4, 13, 22], "辰"), "丁酉": ([9, 18, 27], "申"), "戊戌": ([5, 14, 23], "卯"),
-                    "己亥": ([5, 14, 23], "未"),
-                    "庚子": ([5, 14, 23], "申"), "辛丑": ([1, 10, 19, 28], "辰"), "壬寅": ([1, 10, 19, 28], "申"),
-                    "癸卯": ([8, 17, 28], "卯"),
-                    "甲辰": ([1, 10, 19, 28], "未"), "乙巳": ([1, 10, 19, 28], "申"), "丙午": ([5, 14, 23], "辰"),
-                    "丁未": ([5, 14, 23], "申"),
-                    "戊申": ([5, 14, 23], "卯"), "己酉": ([9, 17, 28], "未"), "庚戌": ([4, 13, 22], "申"),
-                    "辛亥": ([4, 13, 22], "辰"),
-                    "壬子": ([2, 11, 20, 29], "申"), "癸丑": ([3, 12, 21, 30], "卯"), "甲寅": ([3, 12, 21, 30], "未"),
-                    "乙卯": ([3, 12, 21, 30], "申"),
-                    "丙辰": ([8, 17, 28], "辰"), "丁巳": ([3, 12, 21, 30], "申"), "戊午": ([2, 11, 20, 29], "卯"),
-                    "己未": ([7, 16, 25], "未"),
-                    "庚申": ([4, 13, 22], "申"), "辛酉": ([2, 11, 20, 29], "辰"), "壬戌": ([5, 14, 23], "申"),
-                    "癸亥": ([5, 14, 23], "卯"),
+                    "甲子": ([6, 15, 24], "未"), "乙丑": ([1, 10, 19, 28], "申"), "丙寅": ([1, 10, 19, 28], "辰"), "丁卯": ([8, 17, 28], "申"),
+                    "戊辰": ([1, 10, 19, 28], "卯"), "己巳": ([1, 10, 19, 28], "未"), "庚午": ([5, 14, 23], "申"), "辛未": ([6, 15, 24], "辰"),
+                    "壬申": ([5, 14, 23], "申"), "癸酉": ([9, 18, 27], "卯"), "甲戌": ([7, 16, 25], "未"), "乙亥": ([4, 13, 22], "申"),
+                    "丙子": ([9, 18, 27], "辰"), "丁丑": ([3, 12, 21, 30], "申"), "戊寅": ([3, 12, 21, 30], "卯"), "己卯": ([8, 17, 28], "未"),
+                    "庚辰": ([1, 10, 19, 28], "申"), "辛巳": ([1, 10, 19, 28], "辰"), "壬午": ([6, 15, 24], "申"), "癸未": ([5, 14, 23], "卯"),
+                    "甲申": ([5, 14, 23], "未"), "乙酉": ([2, 11, 20, 29], "申"), "丙戌": ([4, 13, 22], "辰"), "丁亥": ([7, 16, 25], "申"),
+                    "戊子": ([2, 11, 20, 29], "卯"), "己丑": ([3, 12, 21, 30], "未"), "庚寅": ([8, 17, 28], "申"), "辛卯": ([3, 12, 21, 30], "辰"),
+                    "壬辰": ([3, 12, 21, 30], "申"), "癸巳": ([3, 12, 21, 30], "卯"), "甲午": ([2, 11, 20, 29], "未"), "乙未": ([4, 13, 22], "申"),
+                    "丙申": ([4, 13, 22], "辰"), "丁酉": ([9, 18, 27], "申"), "戊戌": ([5, 14, 23], "卯"), "己亥": ([5, 14, 23], "未"),
+                    "庚子": ([5, 14, 23], "申"), "辛丑": ([1, 10, 19, 28], "辰"), "壬寅": ([1, 10, 19, 28], "申"), "癸卯": ([8, 17, 28], "卯"),
+                    "甲辰": ([1, 10, 19, 28], "未"), "乙巳": ([1, 10, 19, 28], "申"), "丙午": ([5, 14, 23], "辰"), "丁未": ([5, 14, 23], "申"),
+                    "戊申": ([5, 14, 23], "卯"), "己酉": ([9, 17, 28], "未"), "庚戌": ([4, 13, 22], "申"), "辛亥": ([4, 13, 22], "辰"),
+                    "壬子": ([2, 11, 20, 29], "申"), "癸丑": ([3, 12, 21, 30], "卯"), "甲寅": ([3, 12, 21, 30], "未"), "乙卯": ([3, 12, 21, 30], "申"),
+                    "丙辰": ([8, 17, 28], "辰"), "丁巳": ([3, 12, 21, 30], "申"), "戊午": ([2, 11, 20, 29], "卯"), "己未": ([7, 16, 25], "未"),
+                    "庚申": ([4, 13, 22], "申"), "辛酉": ([2, 11, 20, 29], "辰"), "壬戌": ([5, 14, 23], "申"), "癸亥": ([5, 14, 23], "卯"),
                 }
-
-
-                # 原有函数（完全复用）
                 def get_huangdao(zhi):
-                    hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德",
-                          "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
+                    hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德", "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
                     return hd.get(zhi) in ["青龙", "明堂", "金匮", "天德", "玉堂", "司命"]
-
-
                 def is_yue_po(month, zhi):
                     yz = ["", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"]
                     return chong_map.get(yz[month], "") == zhi
-
-
                 def match_type(zhi, t):
                     if t in ["开业择日", "上任择日", "出行择日", "财门择日"]: return zhi in ["寅", "申", "巳", "亥"]
                     if t in ["嫁娶择日", "订婚择日", "修灶择日"]: return zhi in ["子", "午", "卯", "酉"]
                     if t in ["入宅择日", "祈福择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
                     if t in ["安葬择日"]: return zhi in ["子", "丑", "辰", "未", "申", "酉"]
                     return True
-
-
                 def check_god(dg, dz, yue_zhi_main, nian_gan):
-                    lu = {"甲": "寅", "乙": "卯", "丙": "巳", "丁": "午", "戊": "巳", "己": "午", "庚": "申",
-                          "辛": "酉", "壬": "亥", "癸": "子"}
-                    tx = {"寅": "戌", "卯": "亥", "辰": "子", "巳": "丑", "午": "寅", "未": "卯", "申": "辰",
-                          "酉": "巳", "戌": "午", "亥": "未", "子": "申", "丑": "酉"}
-                    ye = {"寅": "亥", "卯": "子", "辰": "丑", "巳": "寅", "午": "卯", "未": "辰", "申": "巳",
-                          "酉": "午", "戌": "未", "亥": "申", "子": "酉", "丑": "戌"}
-                    td = {"甲": ["寅", "午"], "乙": ["申", "子"], "丙": ["卯", "亥"], "丁": ["巳", "丑"],
-                          "戊": ["卯", "亥"], "己": ["巳", "丑"], "庚": ["子", "申"], "辛": ["寅", "午"],
-                          "壬": ["巳", "丑"], "癸": ["卯", "亥"]}
-                    return dz == lu.get(dg, "") or dz == tx.get(yue_zhi_main, "") or dz == ye.get(yue_zhi_main,
-                                                                                                  "") or dz in td.get(
-                        nian_gan, [])
-
-
-                # 原有参数
+                    lu = {"甲": "寅", "乙": "卯", "丙": "巳", "丁": "午", "戊": "巳", "己": "午", "庚": "申", "辛": "酉", "壬": "亥", "癸": "子"}
+                    tx = {"寅": "戌", "卯": "亥", "辰": "子", "巳": "丑", "午": "寅", "未": "卯", "申": "辰", "酉": "巳", "戌": "午", "亥": "未", "子": "申", "丑": "酉"}
+                    ye = {"寅": "亥", "卯": "子", "辰": "丑", "巳": "寅", "午": "卯", "未": "辰", "申": "巳", "酉": "午", "戌": "未", "亥": "申", "子": "酉", "丑": "戌"}
+                    td = {"甲": ["寅", "午"], "乙": ["申", "子"], "丙": ["卯", "亥"], "丁": ["巳", "丑"], "戊": ["卯", "亥"], "己": ["巳", "丑"], "庚": ["子", "申"], "辛": ["寅", "午"], "壬": ["巳", "丑"], "癸": ["卯", "亥"]}
+                    return dz == lu.get(dg, "") or dz == tx.get(yue_zhi_main, "") or dz == ye.get(yue_zhi_main, "") or dz in td.get(nian_gan, [])
                 ri_zhi = r["八字"][2][1]
                 shengxiao = r["生肖"]
                 yue_zhi_main = r["八字"][1][1]
@@ -990,13 +904,10 @@ if st.session_state.bottom_nav_active == "吉日":
                 m, d = check_date.month, check_date.day
                 reason = []
                 is_valid = True
-
-                # 数据库查询（仅验证指定日期）
                 try:
                     conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                     cursor = conn.cursor()
-                    cursor.execute("SELECT 纳音,农历日,红砂 FROM calendar WHERE 国历 LIKE ? LIMIT 1",
-                                   (check_date_str + "%",))
+                    cursor.execute("SELECT 纳音,农历日,红砂 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (check_date_str + "%",))
                     res = cursor.fetchone()
                     conn.close()
                     if not res:
@@ -1007,17 +918,13 @@ if st.session_state.bottom_nav_active == "吉日":
                         st.error("❌ 日期干支数据异常")
                         st.stop()
                     dg, dz = day_gz[0], day_gz[1]
-
-                    # 全套择吉验证（和原有规则完全一致）
                     if hongsha and hongsha.strip() == "红砂":
                         reason.append("❌ 红砂日（大凶）")
                         is_valid = False
-                    # 冲煞校验
                     sx_zhi = sx_map.get(shengxiao, "")
                     if dz == chong_map.get(sx_zhi, "") or dz == chong_map.get(ri_zhi, ""):
                         reason.append("❌ 冲命主生肖/日柱")
                         is_valid = False
-                    # 多人冲煞校验
                     if not is_single:
                         for b in st.session_state.get("jiri_list", []):
                             try:
@@ -1042,8 +949,6 @@ if st.session_state.bottom_nav_active == "吉日":
                     if not match_type(dz, jiri_type):
                         reason.append("❌ 不匹配该事项")
                         is_valid = False
-
-                    # 太阳星/吉神判断
                     first_str = check_date.replace(day=1).strftime("%Y-%m-%d")
                     conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                     cursor = conn.cursor()
@@ -1057,23 +962,18 @@ if st.session_state.bottom_nav_active == "吉日":
                         is_sun = True
                         sun_time = sun_star_table[first_gz][1]
                     has_god = check_god(dg, dz, yue_zhi_main, nian_gan)
-
-                    # 输出验证结果
                     st.markdown("---")
                     st.markdown(f"📅 验证日期：{check_date_str}({day_gz})")
                     st.markdown(f"📌 验证事项：{jiri_type}")
                     if is_valid:
                         st.success("✅ 该日期为**合格吉日**")
                         if is_sun:
-                            st.markdown("<center><font color=#D4AF37>☀️ 太阳吉日</font></center>",
-                                        unsafe_allow_html=True)
+                            st.markdown("<center><font color=#D4AF37>☀️ 太阳吉日</font></center>", unsafe_allow_html=True)
                             st.write(f"太阳吉时：{sun_time}")
                         elif has_god:
-                            st.markdown("<center><font color=#ff6666>🌟 完美吉日</font></center>",
-                                        unsafe_allow_html=True)
+                            st.markdown("<center><font color=#ff6666>🌟 完美吉日</font></center>", unsafe_allow_html=True)
                         else:
-                            st.markdown("<center><font color=#007fff>🛡️ 平安吉日</font></center>",
-                                        unsafe_allow_html=True)
+                            st.markdown("<center><font color=#007fff>🛡️ 平安吉日</font></center>", unsafe_allow_html=True)
                     else:
                         st.error("❌ 该日期**不是吉日**")
                         st.markdown("#### 不合格原因：")
@@ -1082,8 +982,6 @@ if st.session_state.bottom_nav_active == "吉日":
                 except Exception as e:
                     st.error(f"❌ 验证失败：{str(e)}")
         st.stop()
-
-    # ===================== 原有：查询5年内吉日逻辑（完全不变） =====================
     allow_query = False
     if is_single:
         allow_query = True
@@ -1091,7 +989,6 @@ if st.session_state.bottom_nav_active == "吉日":
         allow_query = len(st.session_state.get("jiri_list", [])) == 2
     else:
         allow_query = len(st.session_state.get("jiri_list", [])) >= 2
-
     if st.button("🔍 查询5年内吉日", use_container_width=True):
         if not allow_query:
             if is_double:
@@ -1100,80 +997,45 @@ if st.session_state.bottom_nav_active == "吉日":
                 st.warning("⚠️ 请先添加至少 **2个八字**！")
             st.stop()
         with st.spinner("正在筛选吉日..."):
-            chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥", "午": "子", "未": "丑",
-                         "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
-            sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳", "马": "午", "羊": "未",
-                      "猴": "申", "鸡": "酉", "狗": "戌", "猪": "亥"}
+            chong_map = {"子": "午", "丑": "未", "寅": "申", "卯": "酉", "辰": "戌", "巳": "亥", "午": "子", "未": "丑", "申": "寅", "酉": "卯", "戌": "辰", "亥": "巳"}
+            sx_map = {"鼠": "子", "牛": "丑", "虎": "寅", "兔": "卯", "龙": "辰", "蛇": "巳", "马": "午", "羊": "未", "猴": "申", "鸡": "酉", "狗": "戌", "猪": "亥"}
             sili_jue = [(3, 20), (6, 21), (9, 23), (12, 22), (2, 4), (5, 6), (8, 8), (11, 8)]
             sanniang = [3, 7, 13, 18, 22, 27]
             sun_star_table = {
-                "甲子": ([6, 15, 24], "未"), "乙丑": ([1, 10, 19, 28], "申"), "丙寅": ([1, 10, 19, 28], "辰"),
-                "丁卯": ([8, 17, 28], "申"),
-                "戊辰": ([1, 10, 19, 28], "卯"), "己巳": ([1, 10, 19, 28], "未"), "庚午": ([5, 14, 23], "申"),
-                "辛未": ([6, 15, 24], "辰"),
-                "壬申": ([5, 14, 23], "申"), "癸酉": ([9, 18, 27], "卯"), "甲戌": ([7, 16, 25], "未"),
-                "乙亥": ([4, 13, 22], "申"),
-                "丙子": ([9, 18, 27], "辰"), "丁丑": ([3, 12, 21, 30], "申"), "戊寅": ([3, 12, 21, 30], "卯"),
-                "己卯": ([8, 17, 28], "未"),
-                "庚辰": ([1, 10, 19, 28], "申"), "辛巳": ([1, 10, 19, 28], "辰"), "壬午": ([6, 15, 24], "申"),
-                "癸未": ([5, 14, 23], "卯"),
-                "甲申": ([5, 14, 23], "未"), "乙酉": ([2, 11, 20, 29], "申"), "丙戌": ([4, 13, 22], "辰"),
-                "丁亥": ([7, 16, 25], "申"),
-                "戊子": ([2, 11, 20, 29], "卯"), "己丑": ([3, 12, 21, 30], "未"), "庚寅": ([8, 17, 28], "申"),
-                "辛卯": ([3, 12, 21, 30], "辰"),
-                "壬辰": ([3, 12, 21, 30], "申"), "癸巳": ([3, 12, 21, 30], "卯"), "甲午": ([2, 11, 20, 29], "未"),
-                "乙未": ([4, 13, 22], "申"),
-                "丙申": ([4, 13, 22], "辰"), "丁酉": ([9, 18, 27], "申"), "戊戌": ([5, 14, 23], "卯"),
-                "己亥": ([5, 14, 23], "未"),
-                "庚子": ([5, 14, 23], "申"), "辛丑": ([1, 10, 19, 28], "辰"), "壬寅": ([1, 10, 19, 28], "申"),
-                "癸卯": ([8, 17, 28], "卯"),
-                "甲辰": ([1, 10, 19, 28], "未"), "乙巳": ([1, 10, 19, 28], "申"), "丙午": ([5, 14, 23], "辰"),
-                "丁未": ([5, 14, 23], "申"),
-                "戊申": ([5, 14, 23], "卯"), "己酉": ([9, 17, 28], "未"), "庚戌": ([4, 13, 22], "申"),
-                "辛亥": ([4, 13, 22], "辰"),
-                "壬子": ([2, 11, 20, 29], "申"), "癸丑": ([3, 12, 21, 30], "卯"), "甲寅": ([3, 12, 21, 30], "未"),
-                "乙卯": ([3, 12, 21, 30], "申"),
-                "丙辰": ([8, 17, 28], "辰"), "丁巳": ([3, 12, 21, 30], "申"), "戊午": ([2, 11, 20, 29], "卯"),
-                "己未": ([7, 16, 25], "未"),
-                "庚申": ([4, 13, 22], "申"), "辛酉": ([2, 11, 20, 29], "辰"), "壬戌": ([5, 14, 23], "申"),
-                "癸亥": ([5, 14, 23], "卯"),
+                "甲子": ([6, 15, 24], "未"), "乙丑": ([1, 10, 19, 28], "申"), "丙寅": ([1, 10, 19, 28], "辰"), "丁卯": ([8, 17, 28], "申"),
+                "戊辰": ([1, 10, 19, 28], "卯"), "己巳": ([1, 10, 19, 28], "未"), "庚午": ([5, 14, 23], "申"), "辛未": ([6, 15, 24], "辰"),
+                "壬申": ([5, 14, 23], "申"), "癸酉": ([9, 18, 27], "卯"), "甲戌": ([7, 16, 25], "未"), "乙亥": ([4, 13, 22], "申"),
+                "丙子": ([9, 18, 27], "辰"), "丁丑": ([3, 12, 21, 30], "申"), "戊寅": ([3, 12, 21, 30], "卯"), "己卯": ([8, 17, 28], "未"),
+                "庚辰": ([1, 10, 19, 28], "申"), "辛巳": ([1, 10, 19, 28], "辰"), "壬午": ([6, 15, 24], "申"), "癸未": ([5, 14, 23], "卯"),
+                "甲申": ([5, 14, 23], "未"), "乙酉": ([2, 11, 20, 29], "申"), "丙戌": ([4, 13, 22], "辰"), "丁亥": ([7, 16, 25], "申"),
+                "戊子": ([2, 11, 20, 29], "卯"), "己丑": ([3, 12, 21, 30], "未"), "庚寅": ([8, 17, 28], "申"), "辛卯": ([3, 12, 21, 30], "辰"),
+                "壬辰": ([3, 12, 21, 30], "申"), "癸巳": ([3, 12, 21, 30], "卯"), "甲午": ([2, 11, 20, 29], "未"), "乙未": ([4, 13, 22], "申"),
+                "丙申": ([4, 13, 22], "辰"), "丁酉": ([9, 18, 27], "申"), "戊戌": ([5, 14, 23], "卯"), "己亥": ([5, 14, 23], "未"),
+                "庚子": ([5, 14, 23], "申"), "辛丑": ([1, 10, 19, 28], "辰"), "壬寅": ([1, 10, 19, 28], "申"), "癸卯": ([8, 17, 28], "卯"),
+                "甲辰": ([1, 10, 19, 28], "未"), "乙巳": ([1, 10, 19, 28], "申"), "丙午": ([5, 14, 23], "辰"), "丁未": ([5, 14, 23], "申"),
+                "戊申": ([5, 14, 23], "卯"), "己酉": ([9, 17, 28], "未"), "庚戌": ([4, 13, 22], "申"), "辛亥": ([4, 13, 22], "辰"),
+                "壬子": ([2, 11, 20, 29], "申"), "癸丑": ([3, 12, 21, 30], "卯"), "甲寅": ([3, 12, 21, 30], "未"), "乙卯": ([3, 12, 21, 30], "申"),
+                "丙辰": ([8, 17, 28], "辰"), "丁巳": ([3, 12, 21, 30], "申"), "戊午": ([2, 11, 20, 29], "卯"), "己未": ([7, 16, 25], "未"),
+                "庚申": ([4, 13, 22], "申"), "辛酉": ([2, 11, 20, 29], "辰"), "壬戌": ([5, 14, 23], "申"), "癸亥": ([5, 14, 23], "卯"),
             }
-
-
             def get_huangdao(zhi):
-                hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德", "午": "白虎",
-                      "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
+                hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德", "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
                 return hd.get(zhi) in ["青龙", "明堂", "金匮", "天德", "玉堂", "司命"]
-
-
             def is_yue_po(month, zhi):
                 yz = ["", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"]
                 return chong_map.get(yz[month], "") == zhi
-
-
             def match_type(zhi, t):
                 if t in ["开业择日", "上任择日", "出行择日", "财门择日"]: return zhi in ["寅", "申", "巳", "亥"]
                 if t in ["嫁娶择日", "订婚择日", "修灶择日"]: return zhi in ["子", "午", "卯", "酉"]
                 if t in ["入宅择日", "祈福择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
                 if t in ["安葬择日"]: return zhi in ["子", "丑", "辰", "未", "申", "酉"]
                 return True
-
-
             def check_god(dg, dz, yue_zhi_main, nian_gan):
-                lu = {"甲": "寅", "乙": "卯", "丙": "巳", "丁": "午", "戊": "巳", "己": "午", "庚": "申", "辛": "酉",
-                      "壬": "亥", "癸": "子"}
-                tx = {"寅": "戌", "卯": "亥", "辰": "子", "巳": "丑", "午": "寅", "未": "卯", "申": "辰", "酉": "巳",
-                      "戌": "午", "亥": "未", "子": "申", "丑": "酉"}
-                ye = {"寅": "亥", "卯": "子", "辰": "丑", "巳": "寅", "午": "卯", "未": "辰", "申": "巳", "酉": "午",
-                      "戌": "未", "亥": "申", "子": "酉", "丑": "戌"}
-                td = {"甲": ["寅", "午"], "乙": ["申", "子"], "丙": ["卯", "亥"], "丁": ["巳", "丑"],
-                      "戊": ["卯", "亥"], "己": ["巳", "丑"], "庚": ["子", "申"], "辛": ["寅", "午"],
-                      "壬": ["巳", "丑"], "癸": ["卯", "亥"]}
-                return dz == lu.get(dg, "") or dz == tx.get(yue_zhi_main, "") or dz == ye.get(yue_zhi_main,
-                                                                                              "") or dz in td.get(
-                    nian_gan, [])
-
-
+                lu = {"甲": "寅", "乙": "卯", "丙": "巳", "丁": "午", "戊": "巳", "己": "午", "庚": "申", "辛": "酉", "壬": "亥", "癸": "子"}
+                tx = {"寅": "戌", "卯": "亥", "辰": "子", "巳": "丑", "午": "寅", "未": "卯", "申": "辰", "酉": "巳", "戌": "午", "亥": "未", "子": "申", "丑": "酉"}
+                ye = {"寅": "亥", "卯": "子", "辰": "丑", "巳": "寅", "午": "卯", "未": "辰", "申": "巳", "酉": "午", "戌": "未", "亥": "申", "子": "酉", "丑": "戌"}
+                td = {"甲": ["寅", "午"], "乙": ["申", "子"], "丙": ["卯", "亥"], "丁": ["巳", "丑"], "戊": ["卯", "亥"], "己": ["巳", "丑"], "庚": ["子", "申"], "辛": ["寅", "午"], "壬": ["巳", "丑"], "癸": ["卯", "亥"]}
+                return dz == lu.get(dg, "") or dz == tx.get(yue_zhi_main, "") or dz == ye.get(yue_zhi_main, "") or dz in td.get(nian_gan, [])
             ri_zhi = r["八字"][2][1]
             shengxiao = r["生肖"]
             yue_zhi_main = r["八字"][1][1]
@@ -1239,10 +1101,11 @@ if st.session_state.bottom_nav_active == "吉日":
             if not sun_best and not perfect and not safe:
                 st.info("未找到符合条件的吉日")
 
-# ===================== 独立风水页面（PC版原版完整移植·不影响任何功能） =====================
-if st.session_state.bottom_nav_active == "风水":
-    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属</h3></div>",
-                unsafe_allow_html=True)
+# ===================== 风水页面（互斥控制） =====================
+if st.session_state.bottom_nav_active != "风水":
+    pass
+else:
+    st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🧭 民俗风水·专属</h3></div>", unsafe_allow_html=True)
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先在排盘页完成排盘，再查看专属风水")
     else:
@@ -1251,27 +1114,18 @@ if st.session_state.bottom_nav_active == "风水":
         shengxiao = r["生肖"]
         ri_gan = r["日干"]
         bazi_str = r["八字_str"]
-
-
-        # ============== 原版PC风水核心计算逻辑（100%复刻） ==============
         def get_fengshui_advice():
             try:
-                # 1. 生肖五行
                 wx = SHENGXIAO_WUXING.get(shengxiao, "土")
-                # 2. 八宅命卦：男坎女坤（商用简化正统版）
                 is_male = gender == "先生"
                 minggua = "坎" if is_male else "坤"
                 zhai_type = "东四宅" if minggua in ["坎", "离", "震", "巽"] else "西四宅"
-                # 3. 吉方位
                 caifeng = YONGSHEN_FANGWEI.get(wx, "北方")
                 shiye = caifeng
                 wenchang = "东南"
                 taohua = "南方" if wx in ["木", "火"] else "西方"
-                # 4. 吉利楼层
                 he_lou = LOU_CENG_WUXING.get(wx, [1, 6])
-                # 5. 幸运色
                 se = {"木": "青绿", "火": "红紫", "土": "黄棕", "金": "白金", "水": "蓝黑"}[wx]
-                # 6. 输出文本
                 text = f"【一、命卦与宅卦】\n"
                 text += f"卦象：{minggua}卦｜{'东四命' if zhai_type == '东四宅' else '西四命'}\n"
                 text += f"适合住宅：{zhai_type}\n\n"
@@ -1296,17 +1150,16 @@ if st.session_state.bottom_nav_active == "风水":
                 return text
             except Exception as e:
                 return f"⚠️ 风水生成异常：{str(e)}"
-
-
-        # ============== 显示风水结果 ==============
         fengshui_txt = get_fengshui_advice()
         st.markdown("---")
-        # 读取姓名
         user_name = st.session_state.get("name", "命主")
         st.success(f"✅ {user_name}{gender}｜{shengxiao}｜{bazi_str} 专属风水")
         st.markdown(fengshui_txt)
-# ===================== 最终版AI解读+导出Word/PDF =====================
-if st.session_state.bottom_nav_active == "解读":
+
+# ===================== 解读页面（互斥控制） =====================
+if st.session_state.bottom_nav_active != "解读":
+    pass
+else:
     st.markdown("<div style='text-align:center; margin-top:20px;'><h3>🤖 AI深度命理解读</h3></div>", unsafe_allow_html=True)
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
         st.warning("⚠️ 请先在排盘页完成排盘，再使用AI解读")
@@ -1314,8 +1167,6 @@ if st.session_state.bottom_nav_active == "解读":
         bazi_data = st.session_state.bazi_result
         gender = st.session_state.get("gender", "先生")
         fengshui_txt = ""
-        if st.session_state.get("bottom_nav_active") == "风水":
-            fengshui_txt = st.session_state.get("fengshui_result", "")
         if st.button("🚀 开始深度解读", use_container_width=True):
             with st.spinner("🤖 AI正在深度分析中...\n⏳ 预计5-15秒，请不要重复点击"):
                 try:
@@ -1347,54 +1198,45 @@ if st.session_state.bottom_nav_active == "解读":
 吉方位、吉颜色、饰品、布局建议
 要求：语言专业、简练、命理师风格，不要符号,禁止出现任何星号（*）和井号（#）、不要标题格式,所有内容基于八字核心数据（空亡、地支互动、用忌神等），不空谈。
 """
-                    DEEPSEEK_CONFIG = {
-                        "api_key": "sk-d3b976c41272460eab55726001606b15",
-                        "api_url": "https://api.deepseek.com/v1/chat/completions",
-                        "model": "deepseek-chat",
-                        "timeout": 70,
-                        "temperature": 0.7,
-                        "max_tokens": 2800
-                    }
-                    headers = {"Content-Type": "application/json","Authorization": f"Bearer {DEEPSEEK_CONFIG['api_key']}"}
-                    payload = {"model": DEEPSEEK_CONFIG["model"],"messages": [{"role": "user", "content": prompt}],"temperature": 0.7,"max_tokens": 2800}
-                    response = requests.post(DEEPSEEK_CONFIG["api_url"], headers=headers, json=payload, timeout=70)
-                    response.raise_for_status()
-                    ai_result = response.json()["choices"][0]["message"]["content"].strip()
+                    # 初始化豆包客户端
+                    client = OpenAI(
+                        api_key=DOUBAO_CONFIG["api_key"],
+                        base_url=DOUBAO_CONFIG["base_url"],
+                    )
+
+                    # 调用豆包接口
+                    response = client.chat.completions.create(
+                        model=DOUBAO_CONFIG["model"],
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=DOUBAO_CONFIG["temperature"],
+                        max_tokens=DOUBAO_CONFIG["max_tokens"],
+                        timeout=DOUBAO_CONFIG["timeout"]
+                    )
+                    ai_result = response.choices[0].message.content.strip()
                     st.session_state.ai_result = ai_result
                     st.markdown("---")
                     st.success("✅ AI深度解读完成")
                     st.markdown(ai_result)
                 except Exception as e:
                     st.error(f"❌ 解读失败：{str(e)}")
-        # ===================== 【正确版】只在解读页显示导出，不跑顶 =====================
         if "ai_result" in st.session_state and st.session_state.ai_result:
             st.markdown("---")
             st.markdown("#### 📄 导出报告")
-
             if DOCX_AVAILABLE:
-                # 读取姓名
                 user_name = st.session_state.get("name", "命主")
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name = f"{user_name}_八字解读报告_{timestamp}.docx"
-
-                word_bytes = generate_word_doc(
-                    bazi_data,
-                    gender,
-                    st.session_state.ai_result,
-                    st.session_state.get("fengshui_result", "")
-                )
-
+                word_bytes = generate_word_doc(bazi_data, gender, st.session_state.ai_result, st.session_state.get("fengshui_result", ""))
                 st.download_button(
                     label="📄 导出Word",
                     data=word_bytes,
                     file_name=file_name,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True,
-                    key="download_word_report"  # 解决重复ID报错
+                    key="download_word_report"
                 )
             else:
-                st.button("📄 导出Word（未安装python-docx）", disabled=True, use_container_width=True)
-# ========= 【底部固定悬浮导航栏】只负责跟随状态变色，纯视觉层 =========
+                st.button("📄 导出Word（未安装python-docx）", disabled=True, use_container_width=True)# ========= 【底部固定悬浮导航栏】只负责跟随状态变色，纯视觉层 =========
 st.markdown("<div style='height:90px;'></div>",unsafe_allow_html=True)
 act = st.session_state.bottom_nav_active
 # 判定高亮样式
