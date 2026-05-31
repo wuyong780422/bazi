@@ -518,7 +518,7 @@ with tab2:
     else:
         st.warning("请先完成排盘，再查看财运分析")
 with tab3:
-    st.markdown("#### 八字合盘（支持添加当前排盘）")
+    st.markdown("#### 婚恋八字合盘")
     st.markdown("💡 使用方法：排盘 → 添加到合盘列表 → 开始合盘")
 
     # 1. 初始化合盘列表
