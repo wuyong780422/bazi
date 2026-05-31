@@ -170,8 +170,11 @@ def get_gan_wuxing(gan: str) -> str:
 from openai import OpenAI
 
 # 2. 豆包API配置
+# 读取 Streamlit Secrets 里的密钥
+api_key = st.secrets["DOUBAO_API_KEY"]
+
 DOUBAO_CONFIG = {
-    "api_key": st.secrets["DOUBAO_API_KEY"],
+    "api_key": api_key,
     "base_url": "https://ark.cn-beijing.volces.com/api/v3",
     "model": "doubao-lite-4k",
     "timeout": 70,
