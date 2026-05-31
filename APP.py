@@ -171,7 +171,7 @@ from openai import OpenAI
 
 # 2. 豆包API配置
 DOUBAO_CONFIG = {
-    "api_key": "Secret Access Key: WTJNME5qTXdORGd4TkdJNE5EQTNZemcwTXpCaE9XTTNOek5sTkRRek1qaw==",  # 填你Excel里的密钥
+    "api_key": "Secret Access Key:WTJNME5qTXdORGd4TkdJNE5EQTNZemcwTXpCaE9XTTNOek5sTkRRek1qaw==",  # 填你Excel里的密钥
     "base_url": "https://ark.cn-beijing.volces.com/api/v3",
     "model": "doubao-lite-4k",
     "timeout": 70,
