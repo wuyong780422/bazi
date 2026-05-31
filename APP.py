@@ -166,11 +166,12 @@ def get_gan_wuxing(gan: str) -> str:
     else:
         return ""
 # ===================== AI解读专用配置（火山方舟·豆包） =====================
-
+# 1. 先导入OpenAI客户端（火山方舟兼容OpenAI格式）
 from openai import OpenAI
 
+# 2. 豆包API配置
 DOUBAO_CONFIG = {
-    "api_key": os.environ.get("DOUBAO_API_KEY"),
+    "api_key": st.secrets["DOUBAO_API_KEY"],
     "base_url": "https://ark.cn-beijing.volces.com/api/v3",
     "model": "doubao-lite-4k",
     "timeout": 70,
