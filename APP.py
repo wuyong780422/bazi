@@ -423,7 +423,7 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
 
 # ===================== 完整Tabs模块（修复底部高亮同步） =====================
 st.markdown("---")
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘对比", "☯️ 排盘", "⏱️ 吉日", "🏮 风水", "📄 解读", "📜 说明书"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘合盘", "☯️ 排盘", "⏱️ 吉日", "🏮 风水", "📄 解读", "📜 说明书"])
 with tab1:
     d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
 
@@ -518,7 +518,7 @@ with tab2:
     else:
         st.warning("请先完成排盘，再查看财运分析")
 with tab3:
-    st.markdown("#### 婚恋八字合盘")
+    st.markdown("<div style='text-align:center;'><h3>💞 婚恋八字合盘</h3></div>", unsafe_allow_html=True)
     st.markdown("💡 使用方法：排盘 → 添加到合盘列表 → 开始合盘")
 
     # 1. 初始化合盘列表
@@ -675,7 +675,7 @@ with tab3:
         for i, d in enumerate(st.session_state.hepan_list):
             st.write(f"{i+1}. {d['八字_str']}")
 with tab4:
-    # st.markdown("#### 多盘对比")
+    # st.markdown("#### 多盘合盘")
     if "duopan_list" not in st.session_state:
         st.session_state.duopan_list = []
 
@@ -690,7 +690,7 @@ with tab4:
             st.session_state.duopan_list = []
             st.success("已清空")
     with col_btn_compare:
-        if st.button("开始多盘对比", use_container_width=True):
+        if st.button("开始多盘合盘", use_container_width=True):
             if len(st.session_state.duopan_list) < 2:
                 st.warning("至少添加2个八字才能对比")
             else:
@@ -797,7 +797,7 @@ with tab9:
 吴勇，计算机网络高级工程师、网络信息安全高级技师、省级名师工作室成员、省级优秀指导教师、高级双师型教师。爱好计算机编程与传统文化数字化领域，擅长将正统民俗命理逻辑与软件工程规范结合，打造严谨、稳定、易用的命理工具系统。
 
 ### 二、真命盘系统介绍
-真命盘是一套基于正统子平八字 + 传统黄历的命理数字化系统。系统以权威万年历数据库为核心，不做任何自定义命理推算，所有干支、神煞、吉凶均取自预制黄历数据，严格遵循传统命理规则，实现：八字排盘、专业择日、八字合盘、多盘对比、民俗风水、AI 深度解读、报告导出七大核心功能。系统特点：纯数据库读取、无运算误差、逻辑严谨、界面简洁、PC / 移动端无缝互通，适合命理学习、民俗参考、日常择吉使用。
+真命盘是一套基于正统子平八字 + 传统黄历的命理数字化系统。系统以权威万年历数据库为核心，不做任何自定义命理推算，所有干支、神煞、吉凶均取自预制黄历数据，严格遵循传统命理规则，实现：八字排盘、专业择日、八字合盘、多盘合盘、民俗风水、AI 深度解读、报告导出七大核心功能。系统特点：纯数据库读取、无运算误差、逻辑严谨、界面简洁、PC / 移动端无缝互通，适合命理学习、民俗参考、日常择吉使用。
 
 ### 三、择日功能介绍
 真命盘择日功能严格遵循传统择吉文化 “先避凶、后趋吉” 的核心思维，以正统黄历数据为依据，层层筛查，确保所选日子符合民俗规范。
