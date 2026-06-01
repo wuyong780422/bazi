@@ -1,6 +1,4 @@
 import streamlit as st
-# 隐藏默认顶部/底部栏，并添加自定义固定标题栏
-# 隐藏默认顶部栏、平台水印，并添加自定义固定标题栏
 st.markdown("""
 <style>
     /* 隐藏Streamlit默认顶部栏 */
