@@ -1,4 +1,5 @@
 import streamlit as st
+# 隐藏默认顶部/底部栏，并添加自定义固定标题栏
 st.markdown("""
 <style>
     /* 隐藏Streamlit默认顶部栏 */
@@ -6,22 +7,16 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* 强制隐藏右下角所有平台图标/按钮 */
-    [data-testid="stAppDeployButton"],
-    .stDeployButton,
-    .stAppDeployButton,
-    .viewerBadge_container__1QSob,
-    .viewerBadge_link__1S137,
-    .st-emotion-cache-1jicfl2,
-    .st-emotion-cache-1v0mbdj,
-    .st-emotion-cache-1r4qj8v,
-    .st-emotion-cache-1kyxreq {
+    /* 隐藏底部右下角的Streamlit水印/图标 */
+    .stDeployButton, .stAppDeployButton, [data-testid="stAppDeployButton"] {
         visibility: hidden !important;
         display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        width: 0 !important;
-        height: 0 !important;
+    }
+    /* 隐藏底部的“Made with Streamlit”文字 */
+    .viewerBadge_container__1QSob,
+    .viewerBadge_link__1S137 {
+        visibility: hidden !important;
+        display: none !important;
     }
 
     /* 自定义固定顶部标题栏 */
@@ -56,7 +51,6 @@ st.markdown("""
     /* 给页面主体加顶部内边距，避免被标题栏挡住 */
     .block-container {
         padding-top: 80px !important;
-        padding-bottom: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
