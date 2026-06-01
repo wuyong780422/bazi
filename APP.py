@@ -1,11 +1,23 @@
 import streamlit as st
-# 隐藏默认顶部栏，并添加自定义固定标题栏
+# 隐藏默认顶部/底部栏，并添加自定义固定标题栏
 st.markdown("""
 <style>
     /* 隐藏Streamlit默认顶部栏 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* 隐藏底部右下角的Streamlit水印/图标 */
+    .stDeployButton, .stAppDeployButton, [data-testid="stAppDeployButton"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    /* 隐藏底部的“Made with Streamlit”文字 */
+    .viewerBadge_container__1QSob,
+    .viewerBadge_link__1S137 {
+        visibility: hidden !important;
+        display: none !important;
+    }
 
     /* 自定义固定顶部标题栏 */
     .fixed-header {
