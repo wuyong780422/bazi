@@ -1195,7 +1195,7 @@ if st.session_state.bottom_nav_active == "解读":
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0.7,
                     )
-                    ai_result = response.choices[0].message.strip()
+                    ai_result = response.choices[0].message.content.strip()
 
                     st.session_state.ai_result = ai_result
                     st.markdown("---")
