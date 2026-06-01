@@ -1191,7 +1191,7 @@ if st.session_state.bottom_nav_active == "解读":
                         base_url="https://ark.cn-beijing.volces.com/api/v3",
                     )
                     response = client.chat.completions.create(
-                        model="Doubao-1-5-lite-32k",
+                        model="ep-m-20260204112644-t9jzd",
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0.7,
                     )
