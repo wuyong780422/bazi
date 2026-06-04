@@ -1,23 +1,11 @@
 import streamlit as st
-# 隐藏默认顶部/底部栏，并添加自定义固定标题栏
+# 隐藏默认顶部栏，并添加自定义固定标题栏
 st.markdown("""
 <style>
     /* 隐藏Streamlit默认顶部栏 */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-
-    /* 隐藏底部右下角的Streamlit水印/图标 */
-    .stDeployButton, .stAppDeployButton, [data-testid="stAppDeployButton"] {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    /* 隐藏底部的“Made with Streamlit”文字 */
-    .viewerBadge_container__1QSob,
-    .viewerBadge_link__1S137 {
-        visibility: hidden !important;
-        display: none !important;
-    }
 
     /* 自定义固定顶部标题栏 */
     .fixed-header {
@@ -54,6 +42,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 # 固定在顶部的标题栏
 st.markdown("""
@@ -764,7 +753,7 @@ with tab9:
     st.markdown("---")
     st.markdown("""
 ### 一、开发作者简介
-吴勇，太平村兴兴台人，计算机网络高级工程师、网络信息安全高级技师、省级名师工作室成员、省级优秀指导教师、高级双师型教师。爱好计算机编程与传统文化数字化领域，擅长将正统民俗命理逻辑与软件工程规范结合，打造严谨、稳定、易用的命理工具系统。
+吴勇，计算机网络高级工程师、网络信息安全高级技师、省级名师工作室成员、省级优秀指导教师、高级双师型教师。爱好计算机编程与传统文化数字化领域，擅长将正统民俗命理逻辑与软件工程规范结合，打造严谨、稳定、易用的命理工具系统。
 ### 二、真命盘系统介绍
 真命盘是一套基于正统子平八字 + 传统黄历的命理数字化系统。系统以权威万年历数据库为核心，不做任何自定义命理推算，所有干支、神煞、吉凶均取自预制黄历数据，严格遵循传统命理规则，实现：八字排盘、专业择日、八字合盘、多盘合盘、民俗风水、AI 深度解读、报告导出七大核心功能。系统特点：纯数据库读取、无运算误差、逻辑严谨、界面简洁、PC / 移动端无缝互通，适合命理学习、民俗参考、日常择吉使用。
 ### 三、择日功能介绍
@@ -794,8 +783,7 @@ with tab9:
 纯数据库：无推算、无误差，结果稳定
 民俗正统：完全贴合传统择日思维
 场景完善：覆盖 12 类常用事项。
-### 特别声明
-命理分析仅为传统文化趣味解读，人生走向取决于个人努力与选择，请理性看待，勿盲从迷信！
+**特别提醒**：命理分析仅为传统文化趣味解读，人生走向取决于个人努力与选择，请理性看待，勿盲从迷信！
 """)
 
 # ===================== 【核心互斥修复】只渲染当前底部导航页面，其他全部不显示 =====================
@@ -829,7 +817,7 @@ else:
             st.markdown("🔹 **多人择日：可添加多人，支持重复添加同盘**")
         col_add, col_clear, col_start = st.columns(3)
         with col_add:
-            if st.button("➕ 添加当前八字", use_container_width=True):
+            if st.button("➕ 添加当前八字", key="add_person_bazi", use_container_width=True):
                 if "jiri_list" not in st.session_state:
                     st.session_state.jiri_list = []
                 st.session_state.jiri_list.append(r)
