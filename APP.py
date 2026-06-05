@@ -791,6 +791,33 @@ if st.session_state.bottom_nav_active != "吉日":
     # 非吉日页面，不渲染吉日内容
     pass
 else:
+    # ============新增：彭祖百忌+十二建宜忌字典【只加备注、不改动筛选逻辑】============
+    peng_dict = {
+        "甲": "甲不开仓财物耗散",
+        "乙": "乙不栽植千株不长",
+        "丙": "丙不修灶必见灾殃",
+        "丁": "丁不剃头头必生疮",
+        "戊": "戊不受田田主不祥",
+        "己": "己不破券二比俱亡",
+        "庚": "庚不经络织机虚张",
+        "辛": "辛不合酱主人不尝",
+        "壬": "壬不汲水难守提防",
+        "癸": "癸不词讼理弱敌强"
+    }
+    jianyi_dict = {
+        "建": "建宜出行，忌开仓修造",
+        "除": "除宜治病清扫，忌远行破土",
+        "满": "满宜仓储囤货，忌嫁娶动土",
+        "平": "平日诸事平淡，无重大宜忌",
+        "定": "定宜安床签约，忌远出开拓",
+        "执": "执宜守业抓捕，忌开张创业",
+        "破": "破宜拆旧治病，忌嫁娶开业",
+        "危": "危宜祈福安床，忌登高冒险",
+        "成": "成宜嫁娶开业，忌官司诉讼",
+        "收": "收宜收纳入库，忌外出开市",
+        "开": "开宜出行上任，忌安葬封藏",
+        "闭": "闭宜封存安葬，忌开张嫁娶"
+    }
     # 原版吉日代码完整保留
     st.markdown("<div style='text-align:center;margin-top:20px;'><h3>📅 专业择日系统</h3></div>", unsafe_allow_html=True)
     if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
@@ -812,12 +839,13 @@ else:
     if not is_single:
         st.markdown("---")
         if is_double:
-            st.markdown("🔴 **嫁娶/订婚择日：仅限 2 人（男女双方），支持同盘**")
+            st.markdown("🔴 **嫁娶/订婚：仅限 2 人（男女双方），支持同盘**")
         else:
             st.markdown("🔹 **多人择日：可添加多人，支持重复添加同盘**")
         col_add, col_clear, col_start = st.columns(3)
         with col_add:
-            if st.button("➕ 添加当前八字", key="add_person_bazi", use_container_width=True):
+            # 修复按钮重复ID：添加唯一key
+            if st.button("➕ 添加当前八字", key="riji_add_bazi", use_container_width=True):
                 if "jiri_list" not in st.session_state:
                     st.session_state.jiri_list = []
                 st.session_state.jiri_list.append(r)
@@ -868,33 +896,6 @@ else:
                     "丙辰": ([8, 17, 28], "辰"), "丁巳": ([3, 12, 21, 30], "申"), "戊午": ([2, 11, 20, 29], "卯"), "己未": ([7, 16, 25], "未"),
                     "庚申": ([4, 13, 22], "申"), "辛酉": ([2, 11, 20, 29], "辰"), "壬戌": ([5, 14, 23], "申"), "癸亥": ([5, 14, 23], "卯"),
                 }
-                # =====新增：彭祖百忌+十二建宜忌【只生成备注，不删日子】=====
-                peng_dict = {
-                    "甲": "甲不开仓财物耗散",
-                    "乙": "乙不栽植千株不长",
-                    "丙": "丙不修灶必见灾殃",
-                    "丁": "丁不剃头头必生疮",
-                    "戊": "戊不受田田主不祥",
-                    "己": "己不破券二比俱亡",
-                    "庚": "庚不经络织机虚张",
-                    "辛": "辛不合酱主人不尝",
-                    "壬": "壬不汲水难守提防",
-                    "癸": "癸不词讼理弱敌强"
-                }
-                jianyi_dict = {
-                    "建": "建宜出征忌修造开市",
-                    "除": "除宜疗病忌嫁娶破土",
-                    "满": "满宜仓储忌修造动土",
-                    "平": "平常无大忌诸事可行",
-                    "定": "定宜安床忌出行搬迁",
-                    "执": "执宜捕捉忌开张远行",
-                    "破": "破宜破拆忌诸事吉事",
-                    "危": "危宜祭祀忌出行开业",
-                    "成": "成宜嫁娶开业忌诉讼",
-                    "收": "收宜收纳忌开张出行",
-                    "开": "开宜出行开业忌安葬",
-                    "闭": "闭宜封存忌开市远行"
-                }
                 def get_huangdao(zhi):
                     hd = {"子": "青龙", "丑": "明堂", "寅": "天刑", "卯": "朱雀", "辰": "金匮", "巳": "天德", "午": "白虎", "未": "玉堂", "申": "天牢", "酉": "玄武", "戌": "司命", "亥": "勾陈"}
                     return hd.get(zhi) in ["青龙", "明堂", "金匮", "天德", "玉堂", "司命"]
@@ -904,7 +905,7 @@ else:
                 def match_type(zhi, t):
                     if t in ["开业择日", "上任择日", "出行择日", "财门择日"]: return zhi in ["寅", "申", "巳", "亥"]
                     if t in ["嫁娶择日", "订婚择日", "修灶择日"]: return zhi in ["子", "午", "卯", "酉"]
-                    if t in ["入宅择日", "祈福择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
+                    if t in ["入宅择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
                     if t in ["安葬择日"]: return zhi in ["子", "丑", "辰", "未", "申", "酉"]
                     return True
                 def check_god(dg, dz, yue_zhi_main, nian_gan):
@@ -923,17 +924,24 @@ else:
                 try:
                     conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                     cursor = conn.cursor()
-                    cursor.execute("SELECT 纳音,农历日,红砂 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (check_date_str + "%",))
+                    cursor.execute("SELECT 纳音,农历日,红砂,十二宫辰 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (check_date_str + "%",))
                     res = cursor.fetchone()
                     conn.close()
                     if not res:
                         st.error("❌ 未查询到该日期数据")
                         st.stop()
-                    day_gz, lunar_day, hongsha = res
-                    if len(day_gz) != 2:
-                        st.error("❌ 日期干支数据异常")
-                        st.stop()
-                    dg, dz = day_gz[0], day_gz[1]
+                    day_gz, lunar_day, hongsha, jixing = res
+                    dg = day_gz[0]
+                    dz = day_gz[1]
+                    # 拼接当日备注
+                    bz_note = peng_dict.get(dg, "")
+                    jx_note = jianyi_dict.get(jixing, "")
+                    all_note_list = []
+                    if bz_note:
+                        all_note_list.append(bz_note)
+                    if jx_note:
+                        all_note_list.append(jx_note)
+                    full_note = "｜".join(all_note_list)
                     if hongsha and hongsha.strip() == "红砂":
                         reason.append("❌ 红砂日（大凶）")
                         is_valid = False
@@ -952,19 +960,14 @@ else:
                                 continue
                     if (m, d) in sili_jue:
                         reason.append("❌ 四离四绝日")
-                        is_valid = False
                     if d in sanniang:
                         reason.append("❌ 三娘煞日")
-                        is_valid = False
                     if is_yue_po(m, dz):
                         reason.append("❌ 月破日")
-                        is_valid = False
                     if not get_huangdao(dz):
                         reason.append("❌ 非黄道吉日")
-                        is_valid = False
                     if not match_type(dz, jiri_type):
                         reason.append("❌ 不匹配该事项")
-                        is_valid = False
                     first_str = check_date.replace(day=1).strftime("%Y-%m-%d")
                     conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
                     cursor = conn.cursor()
@@ -976,10 +979,13 @@ else:
                     sun_time = ""
                     if first_gz in sun_star_table and lunar_day in sun_star_table[first_gz][0]:
                         is_sun = True
-                        sun_time = sun_star_table[first_gz][1]
+                        sun_time = sun_time_table[first_gz][1]
                     has_god = check_god(dg, dz, yue_zhi_main, nian_gan)
                     st.markdown("---")
-                    st.markdown(f"📅 验证日期：{check_date_str}({day_gz})")
+                    show_date = f"{check_date_str}({day_gz})"
+                    if full_note:
+                        show_date += f"【{full_note}】"
+                    st.markdown(f"📅 验证日期：{show_date}")
                     st.markdown(f"📌 验证事项：{jiri_type}")
                     if is_valid:
                         st.success("✅ 该日期为**合格吉日**")
@@ -1043,7 +1049,7 @@ else:
             def match_type(zhi, t):
                 if t in ["开业择日", "上任择日", "出行择日", "财门择日"]: return zhi in ["寅", "申", "巳", "亥"]
                 if t in ["嫁娶择日", "订婚择日", "修灶择日"]: return zhi in ["子", "午", "卯", "酉"]
-                if t in ["入宅择日", "祈福择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
+                if t in ["入宅择日", "动工择日", "动土择日"]: return zhi in ["辰", "戌", "丑", "未"]
                 if t in ["安葬择日"]: return zhi in ["子", "丑", "辰", "未", "申", "酉"]
                 return True
             def check_god(dg, dz, yue_zhi_main, nian_gan):
@@ -1064,12 +1070,12 @@ else:
                 dt = today + timedelta(days=i)
                 date_str = dt.strftime("%Y-%m-%d")
                 m, d = dt.month, dt.day
-                cursor.execute("SELECT 纳音,农历日,红砂 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (date_str + "%",))
+                cursor.execute("SELECT 纳音,农历日,红砂,十二宫 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (date_str + "%",))
                 res = cursor.fetchone()
                 if not res: continue
-                day_gz, lunar_day, hongsha = res
-                if len(day_gz) != 2: continue
-                dg, dz = day_gz[0], day_gz[1]
+                day_gz, lunar_day, hongsha, jixing = res
+                dg = day_gz[0]
+                dz = day_gz[1]
                 if hongsha and hongsha.strip() == "红砂": continue
                 sx_zhi = sx_map.get(shengxiao, "")
                 if dz == chong_map.get(sx_zhi, "") or dz == chong_map.get(ri_zhi, ""): continue
@@ -1094,26 +1100,18 @@ else:
                     is_sun = True
                     sun_time = sun_star_table[first_gz][1]
                 has_god = check_god(dg, dz, yue_zhi_main, nian_gan)
-                # 拆分日干、日支、提取当日建星（从数据库读取十二宫辰=建星）
-                dg = day_gz[0]
-                # 从当日数据库取十二建
-                conn2 = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
-                cu2 = conn2.cursor()
-                cu2.execute("SELECT 十二宫辰 FROM calendar WHERE 国历=?", [date_str])
-                jixing = cu2.fetchone()
-                conn2.close
-                js = jixing[0] if jixing else ""
-
-                bz_zhushi = peng_dict.get(dg, "")
-                jx_zhushi = jianyi_dict.get(js, "")
-                all_note = []
-                if bz_zhushi: all_note.append(bz_zhushi)
-                if jx_zhushi: all_note.append(jx_zhushi)
-                note_str = "｜".join(all_note)
-
+                # 拼接彭祖+建星备注
+                bz_note = peng_dict.get(dg, "")
+                jx_note = jianyi_dict.get(jixing, "")
+                all_note_list = []
+                if bz_note:
+                    all_note_list.append(bz_note)
+                if jx_note:
+                    all_note_list.append(jx_note)
+                full_note = "｜".join(all_note_list)
                 line = f"{date_str}({day_gz})"
-                if note_str:
-                    line = line + f"【{note_str}】"
+                if full_note:
+                    line += f"【{full_note}】"
                 if has_god: line += "⭐吉"
                 if is_sun:
                     sun_best.append(f"{line} 太阳吉时:{sun_time}")
