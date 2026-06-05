@@ -1070,7 +1070,7 @@ else:
                 dt = today + timedelta(days=i)
                 date_str = dt.strftime("%Y-%m-%d")
                 m, d = dt.month, dt.day
-                cursor.execute("SELECT 纳音,农历日,红砂,十二宫 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (date_str + "%",))
+                cursor.execute("SELECT 纳音,农历日,红砂,十二宫辰 FROM calendar WHERE 国历 LIKE ? LIMIT 1", (date_str + "%",))
                 res = cursor.fetchone()
                 if not res: continue
                 day_gz, lunar_day, hongsha, jixing = res
