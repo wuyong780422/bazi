@@ -421,6 +421,27 @@ with tab1:
     d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
     # 【新增】查询完整黄历数据（五行、廿八宿、星期、十二宫辰、红砂）
     def get_full_calendar_data(solar_date_str: str):
+        # =====【万年历宜忌字典：彭祖百忌+十二建星｜协纪辨方正统规则】=====
+        jian_rule = {
+            "建": {"宜": "出行、祭祀、筹划谋事", "忌": "动土、开仓、破土修造"},
+            "除": {"宜": "求医治病、清扫除秽、祈福还愿", "忌": "远迁搬家、破土动工"},
+            "满": {"宜": "仓储囤货、置办物资、入库收纳", "忌": "动土修造、嫁娶开张"},
+            "平": {"宜": "日常探亲、购物、琐碎小事", "忌": "签约嫁娶、大型动工"},
+            "定": {"宜": "订婚签约、安床置业、文书立契", "忌": "长途远行、外出创业"},
+            "执": {"宜": "收债守业、抓捕追责", "忌": "开市开张、外出开拓"},
+            "破": {"宜": "拆旧拆改、治病除病", "忌": "嫁娶、开业、入宅、动土"},
+            "危": {"宜": "安床安神、祭祀祈福", "忌": "登高远行、冒险置业"},
+            "成": {"宜": "嫁娶、开业、动工、入学、上任", "忌": "官司诉讼、纷争口舌"},
+            "收": {"宜": "收账入库、储蓄囤货", "忌": "开市开张、外出散财"},
+            "开": {"宜": "开业、出行、求职上任", "忌": "安葬下葬、封藏事宜"},
+            "闭": {"宜": "安葬、封堵封存、收纳存货", "忌": "嫁娶、开市、新项目动工"}
+        }
+        peng_rule = {
+            "甲": "开仓出货", "乙": "栽种苗木", "丙": "修灶厨炊", "丁": "剃头理发",
+            "戊": "受让田地", "己": "立券破约", "庚": "经络纺线", "辛": "酿造酱料",
+            "壬": "开渠汲水", "癸": "打官司讼"
+        }
+        # =====原有数据库查询逻辑不动=====
         try:
             conn = sqlite3.connect(resource_path("bazi_calendar.db"), timeout=10)
             cursor = conn.cursor()
@@ -431,17 +452,32 @@ with tab1:
             row = cursor.fetchone()
             conn.close()
             if row:
+                wuxing, week, baxiu, jianxing, hongsha = row
+                # =====自动计算宜、忌=====
+                base_yi = jian_rule.get(jianxing, {}).get("宜", "无")
+                base_ji = jian_rule.get(jianxing, {}).get("忌", "无")
+                # 提取日干
+                ri_gan = wuxing[0] if wuxing else ""
+                peng_ji_text = peng_rule.get(ri_gan, "")
+                if peng_ji_text:
+                    base_ji += "、" + peng_ji_text
+                # 红砂强制诸事不宜
+                if hongsha == "红砂":
+                    base_yi = "诸事不宜"
+
                 return {
-                    "五行": row[0] or "",
-                    "星期": row[1] or "",
-                    "廿八宿": row[2] or "",
-                    "十二宫辰": row[3] or "",
-                    "红砂": row[4] if row[4] and row[4].strip() else "否"
+                    "五行": wuxing or "",
+                    "星期": week or "",
+                    "廿八宿": baxiu or "",
+                    "十二宫辰": jianxing or "",
+                    "红砂": hongsha if (hongsha and hongsha.strip()) else "否",
+                    "宜": base_yi,
+                    "忌": base_ji
                 }
             else:
-                return {"五行":"","星期":"","廿八宿":"","廿八宿":"","十二宫辰":"","红砂":"否"}
+                return {"五行": "", "星期": "", "廿八宿": "", "十二宫辰": "", "红砂": "否", "宜": "暂无", "忌": "暂无"}
         except Exception:
-            return {"五行":"","星期":"","廿八宿":"","十二宫辰":"","红砂":"否"}
+            return {"五行": "", "星期": "", "廿八宿": "", "十二宫辰": "", "红砂": "否", "宜": "暂无", "忌": "暂无"}
     if st.button("查询万年历"):
         s = d.strftime("%Y-%m-%d")
         lu = solar_to_lunar_from_db(s)
@@ -453,6 +489,8 @@ with tab1:
         st.write(f"🪶 年柱:{n}　月柱:{y}　日柱:{r}")
         st.write(f"🔥 五行：{cal['五行']}　🩸 红砂：{cal['红砂']}")
         st.write(f"🏮 廿八宿：{cal['廿八宿']}　🏯 十二宫辰：{cal['十二宫辰']}")
+        st.write(f"✅宜：{cal['宜']}")
+        st.write(f"❌忌：{cal['忌']}")
 with tab2:
     if "bazi_result" in st.session_state and st.session_state.bazi_result:
         r = st.session_state.bazi_result
