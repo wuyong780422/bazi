@@ -749,7 +749,7 @@ with tab8:
         st.session_state.bottom_nav_active = "解读"
         st.rerun()
 with tab9:
-    st.markdown("<div style='text-align:center; margin-top:10px;'><h3>📜 真命盘说明书</h3></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; margin-top:10px;'><h3>真命盘说明书</h3></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("""
 ### 一、开发作者简介
