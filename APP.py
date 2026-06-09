@@ -1612,8 +1612,8 @@ act = st.session_state.bottom_nav_active
 s1 = "color:#D4AF37;font-weight:bold;" if act=="排盘" else "color:#555;"
 s2 = "color:#D4AF37;font-weight:bold;" if act=="吉日" else "color:#555;"
 s3 = "color:#D4AF37;font-weight:bold;" if act=="风水" else "color:#555;"
-s4 = "color:#D4AF37;font-weight:bold;" if act=="解读" else "color:#555;"
-s5 = "color:#D4AF37;font-weight:bold;" if act=="." else "color:#555;"
+s4 = "color:#D4AF37;font-weight:bold;" if act=="取名" else "color:#555;"
+s5 = "color:#D4AF37;font-weight:bold;" if act=="解读" else "color:#555;"
 s6 = "color:#D4AF37;font-weight:bold;" if act==".." else "color:#555;"
 s7 = "color:#D4AF37;font-weight:bold;" if act=="..." else "color:#555;"
 # 底部固定7项导航（永久悬浮底部）
@@ -1630,9 +1630,9 @@ st.markdown(f"""
     <div class="nav-item" style="{s1}">☯️<br>排盘</div>
     <div class="nav-item" style="{s2}">⏱️<br>吉日</div>
     <div class="nav-item" style="{s3}">🏮<br>风水</div>
-    <div class="nav-item" style="{s4}">📄<br>解读</div>
-    <div class="nav-item" style="{s5}"></div>
+    <div class="nav-item" style="{s4}">🎯<br>取名</div>
+    <div class="nav-item" style="{s5}">📄<br>解读</div>
     <div class="nav-item" style="{s6}"></div>
-    <div class="nav-item" style="{s7}"></div>
+    <div class="nav-item" style="{s7}"></div> 
 </div>
 """,unsafe_allow_html=True)
