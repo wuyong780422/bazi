@@ -63,7 +63,7 @@ st.markdown("""
 import os
 import sys
 import requests
-from datetime import  timedelta
+from datetime import datetime, timedelta, timezone
 import sqlite3
 # ===================== 资源路径（和APP0完全一样） =====================
 def resource_path(relative_path: str) -> str:
@@ -242,8 +242,6 @@ def analysis_suggest_wuxing(wuxing_dict):
     return weak, desc
 # ===================== 【极简稳定版】导出模块（仅保留Word，无PDF依赖问题） =====================
 import io
-from datetime import datetime
-# import streamlit as st
 
 # ---------------------- Word导出（无兼容问题，100%可用） ----------------------
 DOCX_AVAILABLE = False
@@ -375,12 +373,29 @@ class BaziCalculator:
 
     @staticmethod
     def get_current_bazi() -> dict:
-        now = datetime.now()
-        current_date = now.strftime("%Y-%m-%d")
-        current_hour = now.hour
-        shichen_map = {23: "子时", 0: "子时", 1: "丑时", 2: "丑时", 3: "寅时", 4: "寅时", 5: "卯时", 6: "卯时",
-                       7: "辰时", 8: "辰时", 9: "巳时", 10: "巳时", 11: "午时", 12: "午时", 13: "未时", 14: "未时",
-                       15: "申时", 16: "申时", 17: "酉时", 18: "酉时", 19: "戌时", 20: "戌时", 21: "亥时", 22: "亥时"}
+        # 先获取标准UTC零时区时间，再强制 +8小时 转为 北京时间(东八区 UTC+8)
+        utc_now = datetime.now(timezone.utc)
+        # 北京时间 = UTC时间 + 8小时
+        bj_now = utc_now + timedelta(hours=8)
+
+        current_date = bj_now.strftime("%Y-%m-%d")
+        current_hour = bj_now.hour
+
+        # 时辰对照表（已修复 8点笔误）
+        shichen_map = {
+            23: "子时", 0: "子时",
+            1: "丑时", 2: "丑时",
+            3: "寅时", 4: "寅时",
+            5: "卯时", 6: "卯时",
+            7: "辰时", 8: "辰时",
+            9: "巳时", 10: "巳时",
+            11: "午时", 12: "午时",
+            13: "未时", 14: "未时",
+            15: "申时", 16: "申时",
+            17: "酉时", 18: "酉时",
+            19: "戌时", 20: "戌时",
+            21: "亥时", 22: "亥时"
+        }
         current_shichen = shichen_map.get(current_hour, "亥时")
         return BaziCalculator.generate_bazi(current_date, current_shichen)
 
