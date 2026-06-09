@@ -963,7 +963,7 @@ with tab8:
     st.divider()
 
     # ==================== 区域3：姓氏 + 辈分 录入区（已移除max_length） ====================
-    st.markdown("#### 补充信息（姓氏与辈分）")
+    st.markdown("#### 补充信息(姓氏/辈分)")
     col_surname, col_generation = st.columns(2)
     with col_surname:
         surname = st.text_input("输入姓氏（必填）", placeholder="例：张、李、王")
