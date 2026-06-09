@@ -105,6 +105,141 @@ YONGSHEN_FANGWEI = {"木": "东", "火": "南", "土": "中", "金": "西", "水
 LOU_CENG_WUXING = {"水": [1, 6], "火": [2, 7], "木": [3, 8], "金": [4, 9], "土": [5, 10]}
 BAZHAI_JIXIONG = ["生气", "天医", "延年", "伏位", "绝命", "五鬼", "六煞", "祸害"]
 
+# ===================== 【取名专用常量 | 汉字库 | 民俗规则】 =====================
+# 1. 全局禁用汉字（凶字、不雅字、寓意差字，全场景强制过滤）
+FORBIDDEN_CHARS = [
+    "病", "亡", "凶", "煞", "穷", "毒", "哀", "悲", "残", "孽",
+    "鬼", "妖", "哭", "丧", "恨", "灾", "祸", "枯", "晦", "劣"
+]
+
+# 2. 五行常用汉字库【标准50字版 推荐版】
+# 分类：通用字 / 男用字 / 女用字，五行规则与八字系统完全统一
+WUXING_CHAR = {
+    "金": {
+        "通用": ["金", "玉", "瑞", "祥", "宸", "思", "承", "初", "素", "善", "瑜", "纯", "诗", "铃", "琪", "珊", "锦", "钧", "钦", "铄",
+                "静", "悦", "柔", "馨", "妙", "姿", "姝", "瑾", "翠", "珠", "环", "倩", "舒", "然", "沐", "汐", "潇", "漫", "霏", "霜"],
+        "男": ["锋", "铭", "镇", "峻", "锐", "钢", "铎", "鑫", "昌", "宗", "仕", "刚", "策", "睿", "诚", "崇", "川", "州", "邦", "博",
+                "翰", "哲", "轩", "宇", "泽", "涛", "洋", "宏", "鸿", "斌", "武", "威", "毅", "恒", "彦", "君", "浩", "朗", "达"],
+        "女": ["钰", "菲", "婵", "姿", "姝", "瑾", "瑶", "翠", "珠", "环", "倩", "静", "舒", "然", "悦", "昕", "柔", "馨", "妙", "灵",
+                "伊", "佳", "妍", "媛", "婷", "娜", "茵", "苓", "蓉", "莲", "芍", "芮", "蓓", "芯", "苒", "曼", "雪", "雯", "冰", "寒"]
+    },
+    "木": {
+        "通用": ["林", "森", "芳", "芷", "芸", "若", "英", "茂", "荣", "萱", "茵", "苗", "苑", "芊", "芙", "芝", "芹", "苓", "苇", "菁",
+                "蓉", "莲", "菱", "樱", "杏", "柳", "苒", "曼", "菲", "蓓", "蕊", "芽", "花", "萍", "荷", "菊", "兰", "梅", "桃", "枫"],
+        "男": ["栋", "柏", "松", "柯", "梓", "杰", "毅", "桓", "楷", "彬", "栩", "梵", "权", "桐", "桦", "桥", "桁", "枫", "森", "林",
+                "茂", "荣", "俊", "楠", "杞", "梁", "柱", "杉"],
+        "女": ["梅", "兰", "菊", "荷", "蔓", "茉", "莉", "桃", "杏", "柳", "樱", "菱", "蓉", "莲", "芍", "芮", "菲", "蓓", "芯", "苒",
+                "茵", "芷", "芸", "若", "芳", "萱", "菁", "苇", "芹", "芝", "芙", "苑", "芊", "苗", "花", "萍", "柔", "雅", "薇"]
+    },
+    "水": {
+        "通用": ["浩", "涵", "清", "泽", "雨", "雯", "雪", "云", "冰", "寒", "霏", "霜", "露", "萍", "淳", "沐", "汐", "潇", "漫", "淇",
+                "沁", "沂", "泠", "渺", "湘", "澜", "微", "霞", "霓", "雾", "漾", "滢", "灵"],
+        "男": ["涛", "洋", "鸿", "滨", "渊", "沛", "航", "浦", "瀚", "泷", "波", "浪", "澎", "滔", "浚", "泓", "济", "河", "湖", "海",
+                "源", "泉", "溪", "川", "流", "鹏", "飞", "翔", "帆", "潮"],
+        "女": ["溪", "凝", "滢", "沫", "淇", "沁", "沂", "泠", "渺", "湘", "澜", "淳", "微", "霞", "霓", "雾", "漾", "柔", "雪", "霜",
+                "露", "雨", "雯", "云", "冰", "寒", "霏", "萍", "沐", "汐", "潇", "曼"]
+    },
+    "火": {
+        "通用": ["灵", "昕", "晴", "旭", "晗", "彤", "煜", "焕", "暖", "昭", "晨", "曦", "映", "晖", "暄", "烁", "灿", "光", "亮", "甜"],
+        "男": ["炎", "烨", "烽", "煌", "曜", "晟", "哲", "卓", "炫", "炳", "炯", "朗", "畅", "达", "阳", "日", "明", "耀", "灵"],
+        "女": ["娜", "玲", "婷", "丹", "燕", "夕", "暖", "暄", "烁", "晖", "光", "亮", "晴", "昕", "晗", "彤", "煜", "焕", "昭", "晨"]
+    },
+    "土": {
+        "通用": ["宇", "安", "坤", "垣", "均", "辰", "培", "基", "堂", "雍", "域", "境", "园", "岩", "岚", "依", "宛", "颐", "壤", "怡"],
+        "男": ["岩", "峰", "岳", "磊", "圣", "坚", "疆", "屹", "城", "埔", "垒", "岗", "岭", "峦", "嵩", "硕", "壮", "豪", "厚"],
+        "女": ["婉", "嫣", "岚", "依", "宛", "韵", "幽", "园", "容", "娴", "佳", "羽", "柔", "宁", "坷", "艾", "央", "培"]
+    }
+}
+
+# 3. 十二生肖宜/忌字根（民俗校验，与APP生肖名称完全对齐）
+SHENGXIAO_CHAR = {
+    "鼠": {"yi": ["米", "谷", "口", "宀", "夕"], "ji": ["马", "午", "火"]},
+    "牛": {"yi": ["草", "田", "车", "宀"], "ji": ["羊", "未", "马", "午"]},
+    "虎": {"yi": ["山", "林", "王", "君"], "ji": ["猴", "申", "蛇", "巳"]},
+    "兔": {"yi": ["草", "禾", "口", "宀"], "ji": ["鸡", "酉", "龙", "辰"]},
+    "龙": {"yi": ["水", "云", "日", "月"], "ji": ["狗", "戌", "兔", "卯"]},
+    "蛇": {"yi": ["虫", "口", "木"], "ji": ["猪", "亥", "虎", "寅"]},
+    "马": {"yi": ["草", "禾", "巾", "衣"], "ji": ["鼠", "子", "牛", "丑"]},
+    "羊": {"yi": ["草", "木", "口"], "ji": ["牛", "丑", "狗", "戌"]},
+    "猴": {"yi": ["木", "人", "口"], "ji": ["虎", "寅", "猪", "亥"]},
+    "鸡": {"yi": ["米", "豆", "虫"], "ji": ["兔", "卯", "狗", "戌"]},
+    "狗": {"yi": ["人", "宀", "心"], "ji": ["龙", "辰", "鸡", "酉"]},
+    "猪": {"yi": ["米", "豆", "宀"], "ji": ["蛇", "巳", "猴", "申"]}
+}
+# 导入随机模块（用于名字随机组合）
+import random
+# 固定随机种子，多次刷新结果相对稳定
+random.seed(2026)
+
+def filter_forbidden(char_list):
+    """
+    功能：汉字去重 + 过滤全局凶字
+    :param char_list: 原始汉字列表
+    :return: 清洗后的合法汉字列表
+    """
+    unique_chars = list(set(char_list))  # 自动去重
+    return [c for c in unique_chars if c not in FORBIDDEN_CHARS]
+
+def get_wuxing_chars(target_wuxing, gender_str):
+    """
+    功能：根据【目标五行 + 性别】筛选合法汉字
+    :param target_wuxing: 五行（金/木/水/火/土）
+    :param gender_str: 性别（先生/女士）
+    :return: 过滤后的汉字列表
+    """
+    gender_tag = "男" if gender_str == "先生" else "女"
+    # 合并通用字 + 对应性别专用字
+    base = WUXING_CHAR[target_wuxing]["通用"] + WUXING_CHAR[target_wuxing][gender_tag]
+    return filter_forbidden(base)
+
+def check_shengxiao_match(char, sx):
+    """
+    功能：单字匹配生肖宜忌，生成备注文本
+    :param char: 单个汉字
+    :param sx: 生肖（鼠/牛...猪）
+    :return: 备注字符串（宜/忌/无冲害）
+    """
+    yi_list = SHENGXIAO_CHAR[sx]["yi"]
+    ji_list = SHENGXIAO_CHAR[sx]["ji"]
+    if any(c in char for c in ji_list):
+        return "⚠️ 生肖忌用字"
+    elif any(c in char for c in yi_list):
+        return "✅ 生肖宜用字"
+    else:
+        return "○ 生肖无冲害"
+
+def generate_name(char_list, name_type):
+    """
+    功能：随机生成单字/双字名，自动规避重字
+    :param char_list: 候选汉字池
+    :param name_type: 2=单字名  3=双字名
+    :return: 组合后的名字字符串
+    """
+    if len(char_list) < 2:
+        return ""
+    if name_type == 2:
+        return random.choice(char_list)
+    else:
+        c1 = random.choice(char_list)
+        c2 = random.choice(char_list)
+        # 避免两个字完全重复
+        while c1 == c2:
+            c2 = random.choice(char_list)
+        return c1 + c2
+
+def analysis_suggest_wuxing(wuxing_dict):
+    """
+    功能：分析八字五行强弱，输出推荐取名五行
+    逻辑：优先补充数量最少的2个弱五行，避开最旺五行
+    :param wuxing_dict: 八字五行统计字典 {"金":x,"木":x...}
+    :return: 推荐五行列表 + 文字说明
+    """
+    # 按五行数量【从小到大】排序
+    sort_wux = sorted(wuxing_dict.items(), key=lambda x: x[1])
+    weak = [i[0] for i in sort_wux[:2]]   # 前两位 = 偏弱五行（优先补）
+    strong = sort_wux[-1][0]             # 最后一位 = 过旺五行（尽量避）
+    desc = f"八字【{weak[0]}、{weak[1]}】偏弱，优先选用这两类汉字；【{strong}】偏旺，建议少用"
+    return weak, desc
 # ===================== 【极简稳定版】导出模块（仅保留Word，无PDF依赖问题） =====================
 import io
 from datetime import datetime
@@ -415,7 +550,7 @@ if "bazi_result" in st.session_state and st.session_state.bazi_result:
 
 # ===================== 完整Tabs模块（修复底部高亮同步） =====================
 st.markdown("---")
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘合盘", "☯️ 排盘", "⏱️ 吉日", "🏮 风水", "📄 解读", "📜 说明书"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10= st.tabs(["📆 万年历", "💰 八字论财", "🌀 八字合盘", "🔍 多盘合盘", "☯️ 排盘", "⏱️ 吉日", "🏮 风水", "🎯 取名", "📄 解读", "📜 说明书"])
 
 with tab1:
     d = st.date_input("选择日期", datetime.now(), min_value=datetime(1900, 1, 1), max_value=datetime(2100, 12, 31))
@@ -783,10 +918,129 @@ with tab7:
         st.session_state.bottom_nav_active = "风水"
         st.rerun()
 with tab8:
+    st.markdown("<div style='text-align:center;margin-top:20px;'><h3>🎯 传统智能取名</h3>", unsafe_allow_html=True)
+    # 前置强制校验：未排盘则直接拦截
+    if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
+        st.warning("⚠️ 请先完成八字排盘，再使用取名功能")
+        st.stop()
+
+    # 读取八字排盘会话数据（复用已有数据，不重复查询）
+    bazi_data = st.session_state.bazi_result
+    name_user = name if name.strip() else "命主"
+    gender = st.session_state.get("gender", "先生")
+    shengxiao = bazi_data["生肖"]
+    wuxing_total = bazi_data["五行"]
+    ri_gan = bazi_data["日干"]
+    bazi_str = bazi_data["八字_str"]
+
+    # ==================== 区域1：命主基础信息展示 ====================
+    st.markdown("#### 一、命主基础信息")
+    st.write(f"姓名：{name_user} ｜ 性别：{gender} ｜ 生肖：{shengxiao}")
+    st.write(f"完整八字：{bazi_str} ｜ 日主：{ri_gan}")
+    st.write(f"五行统计：金{wuxing_total['金']} 木{wuxing_total['木']} 水{wuxing_total['水']} 火{wuxing_total['火']} 土{wuxing_total['土']}")
+    st.divider()
+
+    # ==================== 区域2：八字五行取名建议 ====================
+    st.markdown("#### 二、取名五行建议")
+    suggest_wux_list, suggest_desc = analysis_suggest_wuxing(wuxing_total)
+    st.info(f"💡 命理分析：{suggest_desc}")
+    st.write(f"✅ 优先推荐五行：{''.join(suggest_wux_list)}")
+    st.divider()
+
+    # ==================== 区域3：姓氏 + 辈分 录入区 ====================
+    st.markdown("#### 补充信息（姓氏必填，辈分选填）")
+    col_surname, col_generation = st.columns(2)
+    with col_surname:
+        # 姓氏：单字、必填
+        surname = st.text_input("输入姓氏", placeholder="例：张、李、王", max_length=1)
+    with col_generation:
+        # 辈分：单字、选填，无则留空
+        generation_char = st.text_input("输入辈分字（无则留空）", placeholder="例：明、德", max_length=1)
+    st.divider()
+
+    # ==================== 区域4：取名参数配置区 ====================
+    st.markdown("#### 三、取名参数设置")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        # 五行选择：默认选中八字推荐五行
+        select_wux = st.selectbox(
+            "选择取名五行",
+            ["金", "木", "水", "火", "土"],
+            index=["金", "木", "水", "火", "土"].index(suggest_wux_list[0])
+        )
+    with col2:
+        # 三种姓名格式：二字名/普通三字名/带辈分三字名
+        name_type = st.radio(
+            "姓名格式",
+            ["二字名", "普通三字名", "带辈分三字名"],
+            horizontal=True
+        )
+        is_two = (name_type == "二字名")
+        is_normal_three = (name_type == "普通三字名")
+        is_gen_three = (name_type == "带辈分三字名")
+        type_num = 2 if is_two else 3
+    with col3:
+        # 生肖过滤开关（默认开启）
+        use_sx_filter = st.checkbox("启用生肖宜忌过滤", value=True)
+    st.divider()
+
+    # ==================== 区域5：生成按钮 + 结果展示 ====================
+    if st.button("🔮 一键生成名字", use_container_width=True):
+        # 校验：姓氏不能为空
+        if not surname.strip():
+            st.error("❌ 请输入姓氏！")
+            st.stop()
+
+        # 处理辈分字：自动过滤凶字
+        gen_clean = ""
+        if generation_char.strip():
+            if generation_char in FORBIDDEN_CHARS:
+                st.warning("⚠️ 该字为传统凶字，已自动忽略")
+            else:
+                gen_clean = generation_char.strip()
+
+        # 加载对应五行汉字池
+        char_pool = get_wuxing_chars(select_wux, gender)
+        if not char_pool:
+            st.error("暂无匹配汉字，请更换五行后重试")
+            st.stop()
+
+        # 批量生成8组姓名
+        st.markdown("#### 四、推荐姓名（附民俗参考）")
+        for idx in range(1, 9):
+            pure_name = generate_name(char_pool, type_num)
+            if not pure_name:
+                continue
+
+            # 按格式拼接完整姓名
+            if is_two:
+                full_name = f"{surname}{pure_name}"
+            elif is_normal_three:
+                full_name = f"{surname}{pure_name}"
+            else:
+                # 带辈分格式：姓+辈分+单名，无辈分则降级为普通三字名
+                if not gen_clean:
+                    full_name = f"{surname}{pure_name}"
+                else:
+                    full_name = f"{surname}{gen_clean}{pure_name[1]}"
+
+            # 逐个校验汉字生肖宜忌，生成备注
+            note_list = []
+            for c in list(pure_name):
+                note = check_shengxiao_match(c, shengxiao)
+                note_list.append(f"{c}({note})")
+            full_note = " ｜ ".join(note_list)
+
+            # 输出单组姓名+备注
+            st.write(f"{idx}. {full_name}  —— {full_note}")
+
+    # 底部温馨提示
+    st.caption("📌 温馨提示：取名结果为传统文化趣味参考，请结合个人喜好、户籍规范选择")
+with tab9:
     if st.button("deepseek 八 字 解 读",use_container_width=True):
         st.session_state.bottom_nav_active = "解读"
         st.rerun()
-with tab9:
+with tab10:
     st.markdown("<div style='text-align:center; margin-top:10px;'><h3>📜 真命盘说明书</h3></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("""
