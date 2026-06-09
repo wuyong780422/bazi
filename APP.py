@@ -933,9 +933,10 @@ with tab7:
         st.session_state.bottom_nav_active = "风水"
         st.rerun()
 with tab8:
-    # 状态控制：只有底部导航选中「取名」时，才渲染完整取名内容，否则显示提示
-    if st.session_state.bottom_nav_active != "取名":
-        st.info("请点击底部导航栏的「🎯 取名」按钮，进入取名功能")
+    # 【按钮已移到tab8内部】取名功能按钮，只在取名页显示
+    if st.button("🎯 取名功能", use_container_width=True, key="btn_quming"):
+        st.session_state.bottom_nav_active = "取名"
+        st.rerun()
     else:
         st.markdown("<div style='text-align:center;margin-top:20px;'><h3>🎯 传统智能取名</h3>", unsafe_allow_html=True)
 
@@ -1059,10 +1060,7 @@ with tab8:
         # 底部温馨提示
         st.caption("📌 温馨提示：取名结果为传统文化趣味参考，请结合个人喜好、户籍规范选择")
 
-    # 【按钮已移到tab8内部】取名功能按钮，只在取名页显示
-    if st.button("🎯 取名功能", use_container_width=True, key="btn_quming"):
-        st.session_state.bottom_nav_active = "取名"
-        st.rerun()
+    
 with tab9:
     if st.button("deepseek 八 字 解 读",use_container_width=True):
         st.session_state.bottom_nav_active = "解读"
