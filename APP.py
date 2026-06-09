@@ -948,12 +948,12 @@ with tab8:
     st.divider()
 
     # ==================== 区域3：姓氏 + 辈分 录入区（已移除max_length） ====================
-    st.markdown("#### 补充信息（姓氏必填，辈分选填）")
+    st.markdown("#### 补充信息（姓氏与辈分）")
     col_surname, col_generation = st.columns(2)
     with col_surname:
-        surname = st.text_input("输入姓氏", placeholder="例：张、李、王")
+        surname = st.text_input("输入姓氏（必填）", placeholder="例：张、李、王")
     with col_generation:
-        generation_char = st.text_input("输入辈分字（无则留空）")
+        generation_char = st.text_input("输入辈分字（选填）")
     st.divider()
 
     # ==================== 区域4：取名参数配置区 ====================
@@ -968,12 +968,12 @@ with tab8:
     with col2:
         name_type = st.radio(
             "姓名格式",
-            ["二字名", "普通三字名", "带辈分三字名"],
+            ["二字名", "三字名", "带辈分"],
             horizontal=True
         )
         is_two = (name_type == "二字名")
-        is_normal_three = (name_type == "普通三字名")
-        is_gen_three = (name_type == "带辈分三字名")
+        is_normal_three = (name_type == "三字名")
+        is_gen_three = (name_type == "带辈分")
         type_num = 2 if is_two else 3
     with col3:
         use_sx_filter = st.checkbox("启用生肖宜忌过滤", value=True)
