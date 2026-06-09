@@ -933,132 +933,122 @@ with tab7:
         st.session_state.bottom_nav_active = "风水"
         st.rerun()
 with tab8:
-    # 【按钮已移到tab8内部】取名功能按钮，只在取名页显示
-    if st.button("🎯 取名功能", use_container_width=True, key="btn_quming"):
-        st.session_state.bottom_nav_active = "取名"
-        st.rerun()
-    else:
-        st.markdown("<div style='text-align:center;margin-top:20px;'><h3>🎯 传统智能取名</h3>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center;margin-top:20px;'><h3>🎯 传统智能取名</h3>", unsafe_allow_html=True)
+    # 前置强制校验：未排盘则直接拦截
+    if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
+        st.warning("⚠️ 请先完成八字排盘，再使用取名功能")
+        st.stop()
 
-        # 前置强制校验：未排盘则拦截
-        if "bazi_result" not in st.session_state or not st.session_state.bazi_result:
-            st.warning("⚠️ 请先完成八字排盘，再使用取名功能")
+    # 读取八字排盘会话数据（复用已有数据，不重复查询）
+    bazi_data = st.session_state.bazi_result
+    name_user = name if name.strip() else "命主"
+    gender = st.session_state.get("gender", "先生")
+    shengxiao = bazi_data["生肖"]
+    wuxing_total = bazi_data["五行"]
+    ri_gan = bazi_data["日干"]
+    bazi_str = bazi_str = bazi_data["八字_str"]
+
+    # ==================== 区域1：命主基础信息展示 ====================
+    st.markdown("#### 一、命主基础信息")
+    st.write(f"姓名：{name_user} ｜ 性别：{gender} ｜ 生肖：{shengxiao}")
+    st.write(f"完整八字：{bazi_str} ｜ 日主：{ri_gan}")
+    st.write(f"五行统计：金{wuxing_total['金']} 木{wuxing_total['木']} 水{wuxing_total['水']} 火{wuxing_total['火']} 土{wuxing_total['土']}")
+    st.divider()
+
+    # ==================== 区域2：八字五行取名建议 ====================
+    st.markdown("#### 二、取名五行建议")
+    suggest_wux_list, suggest_desc = analysis_suggest_wuxing(wuxing_total)
+    st.info(f"💡 命理分析：{suggest_desc}")
+    st.write(f"✅ 优先推荐五行：{''.join(suggest_wux_list)}")
+    st.divider()
+
+    # ==================== 区域3：姓氏 + 辈分 录入区（已移除max_length） ====================
+    st.markdown("#### 补充信息(姓氏/辈分)")
+    col_surname, col_generation = st.columns(2)
+    with col_surname:
+        surname = st.text_input("输入姓氏（必填）", placeholder="例：张、李、王")
+    with col_generation:
+        generation_char = st.text_input("输入辈分字（选填）")
+    st.divider()
+
+    # ==================== 区域4：取名参数配置区 ====================
+    st.markdown("#### 三、取名参数设置")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        select_wux = st.selectbox(
+            "选择取名五行",
+            ["金", "木", "水", "火", "土"],
+            index=["金", "木", "水", "火", "土"].index(suggest_wux_list[0])
+        )
+    with col2:
+        name_type = st.radio(
+            "姓名格式",
+            ["二字名", "三字名", "带辈分"],
+            horizontal=True
+        )
+        is_two = (name_type == "二字名")
+        is_normal_three = (name_type == "三字名")
+        is_gen_three = (name_type == "带辈分")
+        type_num = 2 if is_two else 3
+    with col3:
+        use_sx_filter = st.checkbox("启用生肖宜忌过滤", value=True)
+    st.divider()
+
+    # ==================== 区域5：生成按钮 + 结果展示（新增单字校验） ====================
+    if st.button("🔮 一键生成名字", use_container_width=True):
+        # 1. 校验：姓氏不能为空 + 强制单字
+        if not surname.strip():
+            st.error("❌ 请输入姓氏！")
+            st.stop()
+        if len(surname.strip()) > 1:
+            st.error("❌ 姓氏请输入单个汉字！")
             st.stop()
 
-        # 读取八字排盘会话数据（复用已有数据，不重复查询）
-        bazi_data = st.session_state.bazi_result
-        name_user = name if name.strip() else "命主"
-        gender = st.session_state.get("gender", "先生")
-        shengxiao = bazi_data["生肖"]
-        wuxing_total = bazi_data["五行"]
-        ri_gan = bazi_data["日干"]
-        bazi_str = bazi_data["八字_str"]
+        # 2. 处理辈分字：单字校验 + 凶字过滤
+        gen_clean = ""
+        if generation_char.strip():
+            # 辈分多字自动截取第一个
+            if len(generation_char.strip()) > 1:
+                st.warning("⚠️ 辈分字仅保留第一个汉字")
+                generation_char = generation_char.strip()[0]
+            # 过滤凶字
+            if generation_char in FORBIDDEN_CHARS:
+                st.warning("⚠️ 该字为传统凶字，已自动忽略")
+            else:
+                gen_clean = generation_char.strip()
 
-        # ==================== 区域1：命主基础信息展示 ====================
-        st.markdown("#### 一、命主基础信息")
-        st.write(f"姓名：{name_user} ｜ 性别：{gender} ｜ 生肖：{shengxiao}")
-        st.write(f"完整八字：{bazi_str} ｜ 日主：{ri_gan}")
-        st.write(
-            f"五行统计：金{wuxing_total['金']} 木{wuxing_total['木']} 水{wuxing_total['水']} 火{wuxing_total['火']} 土{wuxing_total['土']}")
-        st.divider()
+        # 3. 加载五行汉字池
+        char_pool = get_wuxing_chars(select_wux, gender)
+        if not char_pool:
+            st.error("暂无匹配汉字，请更换五行后重试")
+            st.stop()
 
-        # ==================== 区域2：八字五行取名建议 ====================
-        st.markdown("#### 二、取名五行建议")
-        suggest_wux_list, suggest_desc = analysis_suggest_wuxing(wuxing_total)
-        st.info(f"💡 命理分析：{suggest_desc}")
-        st.write(f"✅ 优先推荐五行：{''.join(suggest_wux_list)}")
-        st.divider()
-
-        # ==================== 区域3：姓氏 + 辈分 录入区 ====================
-        st.markdown("#### 补充信息（姓氏/辈分）")
-        col_surname, col_generation = st.columns(2)
-        with col_surname:
-            surname = st.text_input("输入姓氏（必填）", placeholder="例：张、李、王")
-        with col_generation:
-            generation_char = st.text_input("输入辈分字（选填）", placeholder="例：明、德")
-        st.divider()
-
-        # ==================== 区域4：取名参数配置区 ====================
-        st.markdown("#### 三、取名参数设置")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            select_wux = st.selectbox(
-                "选择取名五行",
-                ["金", "木", "水", "火", "土"],
-                index=["金", "木", "水", "火", "土"].index(suggest_wux_list[0])
-            )
-        with col2:
-            name_type = st.radio(
-                "姓名格式",
-                ["二字", "三字", "辈分"],
-                horizontal=True
-            )
-            is_two = (name_type == "二字")
-            is_normal_three = (name_type == "三字")
-            is_gen_three = (name_type == "辈分")
-            type_num = 2 if is_two else 3
-        with col3:
-            use_sx_filter = st.checkbox("启用生肖宜忌过滤", value=True)
-        st.divider()
-
-        # ==================== 区域5：生成按钮 + 结果展示 ====================
-        if st.button("🔮 一键生成名字", use_container_width=True):
-            # 校验：姓氏不能为空 + 强制单字
-            if not surname.strip():
-                st.error("❌ 请输入姓氏！")
-                st.stop()
-            if len(surname.strip()) > 1:
-                st.error("❌ 姓氏请输入单个汉字！")
-                st.stop()
-
-            # 处理辈分字：自动过滤凶字 + 单字校验
-            gen_clean = ""
-            if generation_char.strip():
-                if len(generation_char.strip()) > 1:
-                    st.warning("⚠️ 辈分字仅保留第一个汉字")
-                    generation_char = generation_char.strip()[0]
-                if generation_char in FORBIDDEN_CHARS:
-                    st.warning("⚠️ 该字为传统凶字，已自动忽略")
-                else:
-                    gen_clean = generation_char.strip()
-
-            # 加载对应五行汉字池
-            char_pool = get_wuxing_chars(select_wux, gender)
-            if not char_pool:
-                st.error("暂无匹配汉字，请更换五行后重试")
-                st.stop()
-
-            # 批量生成8组姓名
-            st.markdown("#### 四、推荐姓名（附民俗参考）")
-            for idx in range(1, 9):
-                pure_name = generate_name(char_pool, type_num)
-                if not pure_name:
-                    continue
-
-                # 按格式拼接完整姓名
-                if is_two:
-                    full_name = f"{surname}{pure_name}"
-                elif is_normal_three:
+        # 4. 批量生成8组姓名
+        st.markdown("#### 四、推荐姓名（附民俗参考）")
+        for idx in range(1, 9):
+            pure_name = generate_name(char_pool, type_num)
+            if not pure_name:
+                continue
+            # 按格式拼接完整姓名
+            if is_two:
+                full_name = f"{surname}{pure_name}"
+            elif is_normal_three:
+                full_name = f"{surname}{pure_name}"
+            else:
+                if not gen_clean:
                     full_name = f"{surname}{pure_name}"
                 else:
-                    # 带辈分格式：姓+辈分+单名，无辈分则降级为普通三字名
-                    if not gen_clean:
-                        full_name = f"{surname}{pure_name}"
-                    else:
-                        full_name = f"{surname}{gen_clean}{pure_name[1]}"
+                    full_name = f"{surname}{gen_clean}{pure_name[1]}"
+            # 生肖备注生成
+            note_list = []
+            for c in list(pure_name):
+                note = check_shengxiao_match(c, shengxiao)
+                note_list.append(f"{c}({note})")
+            full_note = " ｜ ".join(note_list)
+            st.write(f"{idx}. {full_name}  —— {full_note}")
 
-                # 逐个校验汉字生肖宜忌，生成备注
-                note_list = []
-                for c in list(pure_name):
-                    note = check_shengxiao_match(c, shengxiao)
-                    note_list.append(f"{c}({note})")
-                full_note = " ｜ ".join(note_list)
-
-                # 输出单组姓名+备注
-                st.write(f"{idx}. {full_name}  —— {full_note}")
-
-        # 底部温馨提示
-        st.caption("📌 温馨提示：取名结果为传统文化趣味参考，请结合个人喜好、户籍规范选择")
+    # 底部提示
+    st.caption("📌 温馨提示：取名结果为传统文化趣味参考，请结合个人喜好、户籍规范选择")
 with tab9:
     if st.button("deepseek 八 字 解 读",use_container_width=True):
         st.session_state.bottom_nav_active = "解读"
@@ -1623,7 +1613,7 @@ s1 = "color:#D4AF37;font-weight:bold;" if act=="排盘" else "color:#555;"
 s2 = "color:#D4AF37;font-weight:bold;" if act=="吉日" else "color:#555;"
 s3 = "color:#D4AF37;font-weight:bold;" if act=="风水" else "color:#555;"
 s4 = "color:#D4AF37;font-weight:bold;" if act=="解读" else "color:#555;"
-s5 = "color:#D4AF37;font-weight:bold;" if act=="取名" else "color:#555;"
+s5 = "color:#D4AF37;font-weight:bold;" if act=="." else "color:#555;"
 s6 = "color:#D4AF37;font-weight:bold;" if act==".." else "color:#555;"
 s7 = "color:#D4AF37;font-weight:bold;" if act=="..." else "color:#555;"
 # 底部固定7项导航（永久悬浮底部）
@@ -1640,9 +1630,9 @@ st.markdown(f"""
     <div class="nav-item" style="{s1}">☯️<br>排盘</div>
     <div class="nav-item" style="{s2}">⏱️<br>吉日</div>
     <div class="nav-item" style="{s3}">🏮<br>风水</div>
-    <div class="nav-item" style="{s5}">🎯<br>取名</div>
     <div class="nav-item" style="{s4}">📄<br>解读</div>
+    <div class="nav-item" style="{s5}"></div>
     <div class="nav-item" style="{s6}"></div>
-    <div class="nav-item" style="{s7}"></div> 
+    <div class="nav-item" style="{s7}"></div>
 </div>
 """,unsafe_allow_html=True)
