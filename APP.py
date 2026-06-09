@@ -931,7 +931,7 @@ with tab8:
     shengxiao = bazi_data["生肖"]
     wuxing_total = bazi_data["五行"]
     ri_gan = bazi_data["日干"]
-    bazi_str = bazi_data["八字_str"]
+    bazi_str = bazi_str = bazi_data["八字_str"]
 
     # ==================== 区域1：命主基础信息展示 ====================
     st.markdown("#### 一、命主基础信息")
@@ -947,29 +947,25 @@ with tab8:
     st.write(f"✅ 优先推荐五行：{''.join(suggest_wux_list)}")
     st.divider()
 
-    # ==================== 区域3：姓氏 + 辈分 录入区 ====================
+    # ==================== 区域3：姓氏 + 辈分 录入区（已移除max_length） ====================
     st.markdown("#### 补充信息（姓氏必填，辈分选填）")
     col_surname, col_generation = st.columns(2)
     with col_surname:
-        # 姓氏：单字、必填
-        surname = st.text_input("输入姓氏", placeholder="例：张、李、王", max_length=1)
+        surname = st.text_input("输入姓氏", placeholder="例：张、李、王")
     with col_generation:
-        # 辈分：单字、选填，无则留空
-        generation_char = st.text_input("输入辈分字（无则留空）", placeholder="例：明、德", max_length=1)
+        generation_char = st.text_input("输入辈分字（无则留空）")
     st.divider()
 
     # ==================== 区域4：取名参数配置区 ====================
     st.markdown("#### 三、取名参数设置")
     col1, col2, col3 = st.columns(3)
     with col1:
-        # 五行选择：默认选中八字推荐五行
         select_wux = st.selectbox(
             "选择取名五行",
             ["金", "木", "水", "火", "土"],
             index=["金", "木", "水", "火", "土"].index(suggest_wux_list[0])
         )
     with col2:
-        # 三种姓名格式：二字名/普通三字名/带辈分三字名
         name_type = st.radio(
             "姓名格式",
             ["二字名", "普通三字名", "带辈分三字名"],
@@ -980,61 +976,63 @@ with tab8:
         is_gen_three = (name_type == "带辈分三字名")
         type_num = 2 if is_two else 3
     with col3:
-        # 生肖过滤开关（默认开启）
         use_sx_filter = st.checkbox("启用生肖宜忌过滤", value=True)
     st.divider()
 
-    # ==================== 区域5：生成按钮 + 结果展示 ====================
+    # ==================== 区域5：生成按钮 + 结果展示（新增单字校验） ====================
     if st.button("🔮 一键生成名字", use_container_width=True):
-        # 校验：姓氏不能为空
+        # 1. 校验：姓氏不能为空 + 强制单字
         if not surname.strip():
             st.error("❌ 请输入姓氏！")
             st.stop()
+        if len(surname.strip()) > 1:
+            st.error("❌ 姓氏请输入单个汉字！")
+            st.stop()
 
-        # 处理辈分字：自动过滤凶字
+        # 2. 处理辈分字：单字校验 + 凶字过滤
         gen_clean = ""
         if generation_char.strip():
+            # 辈分多字自动截取第一个
+            if len(generation_char.strip()) > 1:
+                st.warning("⚠️ 辈分字仅保留第一个汉字")
+                generation_char = generation_char.strip()[0]
+            # 过滤凶字
             if generation_char in FORBIDDEN_CHARS:
                 st.warning("⚠️ 该字为传统凶字，已自动忽略")
             else:
                 gen_clean = generation_char.strip()
 
-        # 加载对应五行汉字池
+        # 3. 加载五行汉字池
         char_pool = get_wuxing_chars(select_wux, gender)
         if not char_pool:
             st.error("暂无匹配汉字，请更换五行后重试")
             st.stop()
 
-        # 批量生成8组姓名
+        # 4. 批量生成8组姓名
         st.markdown("#### 四、推荐姓名（附民俗参考）")
         for idx in range(1, 9):
             pure_name = generate_name(char_pool, type_num)
             if not pure_name:
                 continue
-
             # 按格式拼接完整姓名
             if is_two:
                 full_name = f"{surname}{pure_name}"
             elif is_normal_three:
                 full_name = f"{surname}{pure_name}"
             else:
-                # 带辈分格式：姓+辈分+单名，无辈分则降级为普通三字名
                 if not gen_clean:
                     full_name = f"{surname}{pure_name}"
                 else:
                     full_name = f"{surname}{gen_clean}{pure_name[1]}"
-
-            # 逐个校验汉字生肖宜忌，生成备注
+            # 生肖备注生成
             note_list = []
             for c in list(pure_name):
                 note = check_shengxiao_match(c, shengxiao)
                 note_list.append(f"{c}({note})")
             full_note = " ｜ ".join(note_list)
-
-            # 输出单组姓名+备注
             st.write(f"{idx}. {full_name}  —— {full_note}")
 
-    # 底部温馨提示
+    # 底部提示
     st.caption("📌 温馨提示：取名结果为传统文化趣味参考，请结合个人喜好、户籍规范选择")
 with tab9:
     if st.button("deepseek 八 字 解 读",use_container_width=True):
