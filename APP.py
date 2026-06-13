@@ -1,4 +1,11 @@
 import streamlit as st
+# ========== 全局会话变量初始化（必须放在最前面） ==========
+if "bottom_nav_active" not in st.session_state:
+    st.session_state.bottom_nav_active = "排盘"
+if "bazi_result" not in st.session_state:
+    st.session_state.bazi_result = None
+if "gender" not in st.session_state:
+    st.session_state.gender = "先生"
 # 隐藏默认顶部栏，并添加自定义固定标题栏
 st.markdown("""
 <style>
@@ -55,7 +62,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 # =====================底部固定7项导航=====================
-act = st.session_state.bottom_nav_active
+act = st.session_state.get("bottom_nav_active", "排盘")
 # 判定高亮样式
 s1 = "color:#D4AF37;font-weight:bold;" if act=="排盘" else "color:#555;"
 s2 = "color:#D4AF37;font-weight:bold;" if act=="吉日" else "color:#555;"
@@ -450,9 +457,7 @@ div.stButton>button {background-color:#222222;color:#D4AF37;border-radius:30px;h
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
-# 页面状态控制：排盘=主排盘页，吉日=吉日页,风水=风水页，解读=解读页
-if "bottom_nav_active" not in st.session_state:
-    st.session_state.bottom_nav_active = "排盘"
+
 # ===================== 界面与功能（仅优化性别/历法布局，和性别一样一行显示） =====================
 with st.container(border=True):
     col_name_label, col_name_input = st.columns([1, 4])
